@@ -7,7 +7,7 @@ An inventory dashboard for the Tally **Payment Register** (stock out) and **Rece
 
 Deploy on Vercel (see below). The site asks for the dashboard password once on each device. The password is stored in Vercel as `DASHBOARD_PASSWORD`.
 
-All data lives in the Google Sheet **Green Raise Agro Stock Entries**: stock entries, plus the Item, Customer and Vendor masters. Stock is the sum of the entries made on the New Entry page. Opening stock is entered as an Adjustment.
+All data lives in the Google Sheet **Green Raise Agro Stock Entries** ([open](https://docs.google.com/spreadsheets/d/1LLk7_kyH1wcoMpt-LAJUNdH-ArcVmUG1GV1T_oQQW80/edit); tabs Entries, Items, Customers, Vendors, Documents, Company): stock entries, plus the Item, Customer and Vendor masters. Stock is the sum of the entries made on the New Entry page. Opening stock is entered as an Adjustment.
 
 ## New Entry page (Google Sheet)
 
