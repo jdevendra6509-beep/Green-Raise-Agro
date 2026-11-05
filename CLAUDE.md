@@ -28,6 +28,6 @@ The owner wants every dashboard to look clean and professional, like this one:
 - **Mobile**
   - On narrow screens the sidebar becomes a slide-out menu opened by a ☰ button. No sideways scrolling. Wide tables scroll inside their own box.
 - **Behaviour**
-  - Every visit starts on the first page with default filters. Only settings and the saved login are remembered.
+  - Every visit starts on the first page with default filters. Only settings are remembered. There is no dashboard password (owner's choice).
 - **Writing**
   - Plain, specific labels from the owner's point of view. Indian number format (lakh/crore grouping). Dates as dd-Mmm-yy.

@@ -1,12 +1,5 @@
-// Server side of the New Entry page. Checks the dashboard password, then reads from or
-// writes to the Google Sheet through its Apps Script web app. The sheet's secret
+// Server side of the New Entry page. Reads from or writes to the Google Sheet through its Apps Script web app. The sheet's secret
 // (SHEET_SECRET) and address (SHEET_WEBAPP_URL) stay in Vercel's environment.
-const crypto = require('node:crypto');
-
-const same = (a, b) => {
-  const x = Buffer.from(String(a)), y = Buffer.from(String(b));
-  return x.length === y.length && crypto.timingSafeEqual(x, y);
-};
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 function checkEntry(en) {
@@ -59,10 +52,6 @@ function checkMaster(b) {
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  const password = process.env.DASHBOARD_PASSWORD;
-  if (!password || !same(req.headers['x-dashboard-password'] || '', password)) {
-    return res.status(401).json({ ok: false, error: 'The dashboard password is wrong.' });
-  }
   const url = process.env.SHEET_WEBAPP_URL, secret = process.env.SHEET_SECRET;
   if (!url || !secret) return res.status(503).json({ ok: false, error: 'not-configured' });
 

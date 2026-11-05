@@ -619,7 +619,7 @@ const urgPill=u=>u===3?'<span class="pill crit">Out of stock</span>':u===2?'<spa
 const fsnPill=f=>f==='F'?'<span class="pill good">Fast</span>':f==='S'?'<span class="pill flat">Slow</span>':'<span class="pill crit">Non-moving</span>';
 const stockCls=r=>r.close<0?'neg':'';
 const trendTxt=t=>t==null?'<span class="pill info">New</span>':t===0?'–':`<span style="color:${t>0?'var(--good)':'var(--crit)'}">${t>0?'▲':'▼'} ${fmtInt(Math.abs(t*100))}%</span>`;
-// Every visit starts fresh: Overview, last 90 days, no filters. Only Settings and the saved password are remembered.
+// Every visit starts fresh: Overview, last 90 days, no filters. Only Settings are remembered.
 S.f={};S.exp={};
 ['tab','filters','preset','period'].forEach(k=>{try{localStorage.removeItem('gra.'+k)}catch(e){}});
 
@@ -833,9 +833,7 @@ settings(){
   </div>
   <label for="set-exclude" style="display:grid;gap:4px;margin-top:14px;font-size:13px">Ledgers to leave out (not stock items), separated by |<textarea id="set-exclude" data-set="exclude">${esc(SET.exclude)}</textarea></label>
   <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn" type="button" id="setReset">Restore defaults</button></div></div>
-  ${typeof companyPanel==='function'?companyPanel():''}
-  <div class="panel"><div class="panel-h"><h2>This device</h2><p>The password is remembered on this device so the dashboard opens straight away.</p></div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap">${store.get('pw',null)?'<button class="btn" type="button" data-act="forgetPw">Forget saved password</button>':'<span class="muted">No password saved.</span>'}</div></div>`;
+  ${typeof companyPanel==='function'?companyPanel():''}`;
 }};
 /* ============================== Masters (Google Sheet tabs) ============================== */
 const MKIND={mItems:{key:'Items',one:'item',name:'Item Name'},mCust:{key:'Customers',one:'customer',name:'Customer Name'},mVend:{key:'Vendors',one:'vendor',name:'Vendor Name'}};
@@ -860,7 +858,7 @@ function masterCandidates(tab){
 }
 function masterView(tab){
   const K=MKIND[tab];
-  if(S.source!=='hosted')return `<div class="panel"><p class="lede">Masters are kept in the Google Sheet. Open the dashboard with its password to see and edit them.</p></div>`;
+  if(S.source!=='hosted')return `<div class="panel"><p class="lede">Masters are kept in the Google Sheet. Open the live site to see and edit them.</p></div>`;
   const m=S.masters&&S.masters[K.key];
   if(!m)return `<div class="panel"><p class="lede">${S.appState==='loading'?'Loading the masters from the Google Sheet…':S.appState==='unconfigured'?'The Google Sheet connection is not set up yet.':'The masters could not be read from the Google Sheet. Make sure the latest script from the README is deployed as a new version, then refresh.'}</p></div>`;
   const cols=m.headers.filter(h=>h!=='ID');const q=S.f['mq_'+tab]||'';
@@ -933,14 +931,14 @@ const ETYPES={IN:{l:'Inward',h:'Stock received: purchase, return from customer'}
 const newDraft=()=>({type:'IN',date:iso(today()),party:'',bill:'',note:'',mode:'delta',by:store.get('by',''),lines:[{item:'',qty:''},{item:'',qty:''},{item:'',qty:''}]});
 S.draft=null;S.appState='off';S.appErr='';S.delArm=null;S.saving=false;S.editId=null;
 async function api(method,body){
-  const r=await fetch('/api/entries',{method,headers:{'Content-Type':'application/json','x-dashboard-password':S.pw||''},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+  const r=await fetch('/api/entries',{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'});
   let j={};try{j=await r.json()}catch(e){}
   if(r.status===503&&j.error==='not-configured'){const e=new Error('not-configured');e.code=503;throw e}
   if(!r.ok||!j.ok){const e=new Error(j.error||('The server answered '+r.status));e.status=r.status;throw e}
   return j;
 }
 async function loadApp(){
-  if(!S.pw)return;S.appState='loading';renderChips();
+  S.appState='loading';renderChips();
   try{const j=await api('GET');S.files.App={rows:j.rows||[],url:j.url||'',loadedAt:Date.now()};S.masters=j.masters||null;S.docs=j.docs===undefined?null:j.docs;S.company=j.company===undefined?null:j.company;S.appState='ready';S.appErr=''}
   catch(e){S.files.App=null;S.appState=e.code===503?'unconfigured':'error';S.appErr=/unauthori[sz]ed/i.test(e.message)?'the secret in the Google script does not match SHEET_SECRET in Vercel':e.message}
   if(!S.base)return;
@@ -953,7 +951,7 @@ function stockOn(name,day){
   return {known:!!it||S.base.byItem.has(name),qty:b};
 }
 function entryView(){
-  if(S.source!=='hosted')return `<div class="panel"><h2>New Entry</h2><p class="lede">Entries are saved to the Google Sheet through the live site. Open the dashboard with its password (not with files loaded from this device) to add entries.</p></div>`;
+  if(S.source!=='hosted')return `<div class="panel"><h2>New Entry</h2><p class="lede">Entries are saved to the Google Sheet through the live site. Open the live site (not files loaded from this device) to add entries.</p></div>`;
   if(S.appState==='unconfigured')return `<div class="panel" id="entryPage"><h2>Connect the Google Sheet</h2><p class="lede">The New Entry page is ready, but the Google Sheet connection has not been set up on Vercel yet. Follow the steps in the README (Google Sheet set-up) or ask your administrator.</p></div>`;
   const D=S.draft||(S.draft=newDraft());const ty=ETYPES[D.type];
   const items=[...new Set([...S.A.items.map(i=>i.name),...masterNames('mItems',true)])].sort();
@@ -1078,7 +1076,7 @@ function killCharts(){for(const k in S.charts){try{S.charts[k].destroy()}catch(e
 function render(){
   killCharts();renderTabs();
   const main=$('#main');
-  if(S.locked){main.innerHTML=unlockPanel();const pw=$('#unlockPw');if(pw)pw.focus();return}
+  if(S.locked){main.innerHTML=connectPanel();return}
   if(!S.A){main.innerHTML=loadPanel(true);bindDrop();return}
   S.exp={};
   const sheetErr=S.source==='hosted'&&(S.appState==='error'||S.appState==='unconfigured')?`<div class="alert" style="border-color:var(--crit)"><span class="pill crit">Google Sheet</span><div><div class="t">${S.appState==='unconfigured'?'The Google Sheet is not connected':'Entries and masters from the Google Sheet could not be loaded'}</div><p>${S.appState==='unconfigured'?'Set SHEET_WEBAPP_URL and SHEET_SECRET in Vercel, then redeploy.':`Reason: ${esc(S.appErr||'unknown')}. Stock shown here does not include entries made on this site until this is fixed.`}</p><div class="act"><button class="btn sm" type="button" data-act="retryApp">Try again</button></div></div></div>`:'';
@@ -1086,44 +1084,23 @@ function render(){
   const h2=main.querySelector('.panel-h h2');if(h2&&h2.textContent.trim().toLowerCase()===tabLabel(S.tab).toLowerCase())h2.hidden=true;
   if(S.tab==='overview')drawOverviewCharts();
 }
-function unlockPanel(){
+function connectPanel(){
+  const busy=S.appState==='loading';
   return `<div class="drop" style="max-width:520px;margin:24px auto">
-    <h2>Enter the password</h2>
-    <p class="lede">Green Raise Agro Stock Control is locked. Stock, entries and masters are read from the Google Sheet once the password is entered.</p>
-    <form id="unlockForm" style="display:grid;gap:10px;width:100%;max-width:320px">
-      <input type="password" id="unlockPw" autocomplete="current-password" placeholder="Password" aria-label="Password" style="border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:8px 10px">
-      <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--fg-2)"><input type="checkbox" id="unlockRem" checked> Remember on this device</label>
-      <button class="btn pri" type="submit" id="unlockBtn">Open dashboard</button>
-      ${S.unlockErr?`<p style="margin:0;color:var(--crit);font-size:13px">${esc(S.unlockErr)}</p>`:''}
-    </form></div>`;
+    <h2>${busy?'Opening the Google Sheet…':'Could not open the Google Sheet'}</h2>
+    <p class="lede">${busy?'Stock, entries and masters are being read from the Google Sheet.':esc(S.unlockErr||'')}</p>
+    ${busy?'':'<button class="btn pri" type="button" data-act="retrySheet">Try again</button>'}</div>`;
 }
-/* ---- data uploaded to GitHub, published encrypted by the Vercel build ---- */
-async function fetchHosted(){try{const r=await fetch('data.enc.json',{cache:'no-cache'});if(!r.ok)return null;const j=await r.json();return j&&j.ct?j:null}catch(e){return null}}
-const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-async function decryptHosted(h,pw){
-  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
-  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(h.salt),iterations:h.iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
-  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(h.iv)},key,b64(h.ct));
-  const txt=h.gzip?await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text():new TextDecoder().decode(plain);
-  return JSON.parse(txt);
-}
-async function tryUnlock(pw,remember,silent){
-  const btn=$('#unlockBtn');if(btn){btn.disabled=true;btn.textContent='Opening…'}
+async function openSheet(){
+  S.appState='loading';S.locked=true;renderChips();render();
   try{
-    if(S.hosted){const d=await decryptHosted(S.hosted,pw);
-      S.files.Payment=unpack(d.Payment);S.files.Receipt=unpack(d.Receipt);S.files.Master=d.Master||null;S.files.Opening=d.Opening||null;S.files.Journal=unpack(d.Journal)||null;S.srcAt=d.builtAt}
-    S.pw=pw;
-    // the Google Sheet is the source of entries and masters; the server checks the password
-    S.appState='loading';const j=await api('GET');
+    const j=await api('GET');
     S.files.App={rows:j.rows||[],url:j.url||'',loadedAt:Date.now()};S.masters=j.masters||null;S.docs=j.docs===undefined?null:j.docs;S.company=j.company===undefined?null:j.company;S.appState='ready';S.appErr='';
     S.source='hosted';S.locked=false;S.unlockErr='';
-    if(remember)store.set('pw',pw);
     boot(false);return true;
   }catch(e){
-    const wrong=e.status===401||e.name==='OperationError';
-    if(wrong){S.pw=null;if(silent)store.set('pw',null)}
     S.appState='off';S.locked=true;
-    S.unlockErr=wrong?(silent?'The saved password no longer works. Enter the current one.':'That password is not right. Check it and try again.'):'Could not reach the Google Sheet: '+e.message+' Try again in a moment.';
+    S.unlockErr=e.code===503?'The Google Sheet is not connected yet. Set SHEET_WEBAPP_URL and SHEET_SECRET in Vercel, then redeploy.':/unauthori[sz]ed/i.test(e.message)?'The secret in the Google script does not match SHEET_SECRET in Vercel.':'Could not reach the Google Sheet: '+e.message+' Try again in a moment.';
     renderChips();render();return false;
   }
 }
@@ -1222,7 +1199,7 @@ function bindDrop(){const d=$('#drop');if(!d)return;
 document.addEventListener('dragover',e=>e.preventDefault());
 document.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer&&e.dataTransfer.files.length&&!e.target.closest('#drop'))handleFiles([...e.dataTransfer.files])});
 function sheetChip(){
-  const st=S.appState;if(S.locked&&st!=='ready')return '<span class="chip miss"><b>Google Sheet</b>locked</span>';const n=S.files.App?new Set(S.files.App.rows.filter(r=>!/deleted/i.test(r.status||'')).map(r=>r.id)).size:0;
+  const st=S.appState;const n=S.files.App?new Set(S.files.App.rows.filter(r=>!/deleted/i.test(r.status||'')).map(r=>r.id)).size:0;
   const txt=st==='ready'?`${fmtInt(n)} entries`:st==='loading'?'loading…':st==='unconfigured'?'not connected':st==='error'?'<span style="color:var(--crit)">could not load</span>':'not loaded';
   return `<span class="chip ${st==='ready'?'ok':'miss'}" title="${esc(S.appErr||'')}"><b>Google Sheet</b>${txt}</span>`;
 }
@@ -1231,7 +1208,7 @@ function renderChips(){
   const mc=(k,l)=>S.masters&&S.masters[k]?`<span class="chip ok"><b>${l}</b>${fmtInt(S.masters[k].rows.length)}</span>`:'';
   $('#fileChips').innerHTML=(S.files.Payment?c(S.files.Payment,'Payment'):'')+(S.files.Receipt?c(S.files.Receipt,'Receipt'):'')+sheetChip()+mc('Items','Items')+mc('Customers','Customers')+mc('Vendors','Vendors');
   const co=(S.files.Payment&&S.files.Payment.company)||(S.files.Receipt&&S.files.Receipt.company);$('#coName').textContent=co||'Stock Control';
-  const sb=$('#sampleBar');const showLocal=S.source==='local'&&S.hosted;sb.hidden=!(S.source==='snapshot'||showLocal);
+  const sb=$('#sampleBar');const showLocal=false;sb.hidden=!(S.source==='snapshot'||showLocal);
   if(S.source==='snapshot')$('#sampleText').textContent=`Showing the registers loaded on ${new Date(S.srcAt||Date.now()).toLocaleDateString('en-IN')} (${S.files.Payment?S.files.Payment.periodText:''}). Load newer Tally exports with "Load / replace files" to update.`;
   else if(showLocal)$('#sampleText').innerHTML=`Showing files loaded on this device on ${esc(new Date(S.srcAt).toLocaleString('en-IN'))}. The GitHub data was built on ${esc(new Date(S.hosted.builtAt).toLocaleString('en-IN'))}. <button class="btn sm" type="button" data-act="useHosted">Use the GitHub data</button>`;
 }
@@ -1273,9 +1250,8 @@ document.addEventListener('click',e=>{
   if(act==='pick')$('#fileInput').click();
   else if(act==='master')downloadMaster();
   else if(act==='copyMaster')copyMaster();
-  else if(act==='useHosted')useHosted();
   else if(act==='retryApp'){toast('Loading from the Google Sheet…');loadApp()}
-  else if(act==='forgetPw'){store.set('pw',null);toast('Saved password removed from this device');render()}
+  else if(act==='retrySheet'){openSheet()}
   else if(act==='neverIn'){S.f.sQ='';saveF();showList('Sold but never received',S.A.items.filter(i=>i.inAll===0&&i.outAll>0).map(i=>i.name))}
   else if(act==='dups')showList('Possible duplicate item names',S.dups.map(a=>a.join('  =  ')),true);
   if(t.id==='setReset'){SET=Object.assign({},DEFAULTS);store.set('settings',{});buildBase();recalc()}
@@ -1290,7 +1266,7 @@ document.addEventListener('input',e=>{const el=e.target;
   if(el.dataset&&el.dataset.set){const k=el.dataset.set;clearTimeout(tmr);tmr=setTimeout(()=>{SET[k]=(k==='exclude'||k==='moqBasis')?el.value:Math.max(0,+el.value||0);if(!SET[k]&&['basisDays','leadDays','moqMonths'].includes(k))SET[k]=DEFAULTS[k];store.set('settings',SET);if(k==='exclude')buildBase();analyse();renderTabs()},350);return}
   if(el.type==='search'&&el.id){clearTimeout(tmr);const id=el.id,pos=el.selectionStart;tmr=setTimeout(()=>{S.f[id]=el.value;saveF();Object.values(S.tstate).forEach(s=>s.all=false);render();const n=document.getElementById(id);if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}},250)}
 });
-document.addEventListener('submit',e=>{if(e.target.id==='entryForm'){e.preventDefault();saveEntry();return}if(e.target.id==='masterForm'){e.preventDefault();saveMaster();return}if(e.target.id==='colForm'){e.preventDefault();addColumn();return}if(e.target.id!=='unlockForm')return;e.preventDefault();const pw=$('#unlockPw').value;if(pw)tryUnlock(pw,$('#unlockRem').checked,false)});
+document.addEventListener('submit',e=>{if(e.target.id==='entryForm'){e.preventDefault();saveEntry();return}if(e.target.id==='masterForm'){e.preventDefault();saveMaster();return}if(e.target.id==='colForm'){e.preventDefault();addColumn();return}});
 document.addEventListener('change',e=>{const el=e.target;if(el.closest&&el.closest('#entryForm')){entryChanged(el);return}if(el.closest&&el.closest('#masterForm,#colForm,#docForm,#coForm'))return;if(!el.id||el.closest('#periodBar')||el.closest('#unlockForm')||el.dataset.set||el.type==='file'||el.type==='search')return;
   S.f[el.id]=el.type==='checkbox'?el.checked:el.value;saveF();render()});
 if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>render());
@@ -1299,10 +1275,8 @@ new MutationObserver(()=>render()).observe(document.documentElement,{attributes:
 /* ============================== start ============================== */
 (async function start(){
   idb.del('files');
-  S.hosted=await fetchHosted();
-  S.locked=true;renderChips();
-  const pw=store.get('pw',null);if(pw&&await tryUnlock(pw,true,true))return;
-  render();
+  store.set('pw',null);
+  await openSheet();
 })();
 </script>
 <script src="js/docs.js"></script>

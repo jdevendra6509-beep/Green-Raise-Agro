@@ -74,7 +74,7 @@ function newDoc(kind){const t=iso(today());return {type:kind,no:nextNo(kind,t),d
 /* ---------- pages ---------- */
 function docView(kind){
   const K=DOCT[kind];
-  if(S.source!=='hosted')return `<div class="panel"><p class="lede">Open the dashboard with its password to make documents.</p></div>`;
+  if(S.source!=='hosted')return `<div class="panel"><p class="lede">Open the live site to make documents.</p></div>`;
   if(S.docs===null)return `<div class="panel"><p class="lede">${S.appState==='loading'?'Loading documents from the Google Sheet…':'Documents need the latest Google script. Paste google-apps-script/Code.gs into the sheet\'s Apps Script, put your secret back in, then Deploy → Manage deployments → ✏️ → New version → Deploy. Refresh this page afterwards.'}</p></div>`;
   if(S.docDraft&&S.docDraft.type===kind)return docForm(kind);
   const all=docGroups(kind);const q=S.f['dq_'+kind]||'';

@@ -5,7 +5,7 @@ Office no. 116, First Floor, Amnora Apex, Near Amnora Mall, Hadapsar, Pune 41102
 
 An inventory dashboard for the Tally **Payment Register** (stock out) and **Receipt Register** (stock in), where item names are used as ledgers and the voucher amounts are quantities.
 
-Deploy on Vercel (see below). The site asks for the dashboard password once on each device. The password is stored in Vercel as `DASHBOARD_PASSWORD`.
+Deploy on Vercel (see below). There is no login: the site opens straight to the data, so share its address only with people who should see and edit the stock.
 
 All data lives in the Google Sheet **Green Raise Agro Stock Entries** ([open](https://docs.google.com/spreadsheets/d/1LLk7_kyH1wcoMpt-LAJUNdH-ArcVmUG1GV1T_oQQW80/edit); tabs Entries, Items, Customers, Vendors, Documents, Company): stock entries, plus the Item, Customer and Vendor masters. Stock is the sum of the entries made on the New Entry page. Opening stock is entered as an Adjustment.
 
@@ -19,7 +19,7 @@ Stock movements are entered on the **New Entry** tab instead of Tally. These inc
 - An entry dated inside the Tally period gets a warning, because it would be counted twice if it is also in Tally.
 - A "counted stock" adjustment stores the counted figure. The difference is worked out again every time the dashboard recalculates, so the count still holds when back-dated entries are added before it.
 
-How it connects: the page calls `/api/entries` on Vercel (`api/entries.js`). That function checks the dashboard password and then talks to the sheet through its Apps Script web app (`google-apps-script/Code.gs`). Vercel keeps two settings: `SHEET_WEBAPP_URL`, the web app address, and `SHEET_SECRET`, the same value as `SECRET` in the script. Browsers never see either of them.
+How it connects: the page calls `/api/entries` on Vercel (`api/entries.js`). That function talks to the sheet through its Apps Script web app (`google-apps-script/Code.gs`). Vercel keeps two settings: `SHEET_WEBAPP_URL`, the web app address, and `SHEET_SECRET`, the same value as `SECRET` in the script. Browsers never see either of them.
 
 ### Masters (Google Sheet)
 
