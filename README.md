@@ -25,7 +25,7 @@ How it connects: the page calls `/api/entries` on Vercel (`api/entries.js`). Tha
 
 The same spreadsheet holds three masters, each in its own tab: **Items**, **Customers** and **Vendors**. They are edited on the Masters pages of the dashboard (add, edit, delete, **+ Add column**), or directly in the sheet. Every column you add, in either place, shows up automatically. The first column, `ID`, is used internally, so leave it as it is.
 
-- **Items:** MOQ, Max Stock, Lead Time (days), Rate, Category, Unit and Merge Into feed Buy Now and the stock reports, and override the Excel Item Master. Status can be `Active`, `Inactive` (hidden from New Entry) or `Exclude` (not a stock item).
+- **Items:** Category (the only source of item categories), MOQ, Max Stock, Lead Time (days), Rate, Unit and Merge Into feed Buy Now and the stock reports, and override the Excel Item Master. Status can be `Active`, `Inactive` (hidden from New Entry) or `Exclude` (not a stock item).
 - **Filling from Tally:** "Add … from Tally data" adds every item, customer or vendor name found in the Tally files that isn't in the master yet.
 - **New Entry:** item and party suggestions come from the masters and from history.
 
@@ -67,7 +67,7 @@ If you change the script later, use **Deploy → Manage deployments → Edit →
 | Stock Summary | Opening, inward, outward and closing for any period, with MOQ, days of stock, ABC and FSN |
 | Entries | Every item line for any date range, filtered by item, party, voucher no. or in/out |
 | Customers & Suppliers | Top customers and suppliers, and regular customers who have stopped buying |
-| Categories | The same figures grouped by item type (Seeds, Fertilizer, Fungicide, Insecticide…) |
+| Categories | The same figures grouped by the Category set in the Item Master; items without one show as "Not set" |
 | Data Health | Missing opening stock, months with missing inward, condensed exports, duplicate names, and more |
 | Settings | Lead time, safety days, cover days, non-moving days, and the Item Master download |
 

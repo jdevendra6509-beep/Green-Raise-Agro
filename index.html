@@ -328,16 +328,8 @@ const S={files:{Payment:null,Receipt:null,Journal:null,Master:null,Opening:null}
 
 
 /* ============================== categories ============================== */
-const CAT_RULES=[[/\bSEEDS?\b|HYBRID|\bF1\b/,'SEEDS'],[/FUNGICIDE/,'FUNGICIDE'],[/INSECTICIDE/,'INSECTICIDE'],[/HERBICIDE|WEEDICIDE/,'HERBICIDE'],
-  [/PESTICIDE/,'PESTICIDE'],[/\bPGR\b|GROWTH\s*(REG|PROMOT)/,'GROWTH REGULATOR'],[/MICRO\s*NUTRIENT|CHELATED|\bZINC\b|\bBORON\b/,'MICRONUTRIENT'],
-  [/\bBIO|ORGANIC|COMPOST|VERMI/,'BIO / ORGANIC'],[/\bNPK\b|\bUREA\b|\bDAP\b|\bMOP\b|\bSSP\b|FERTI?LI[SZ]ER|\d+\s*:\s*\d+\s*:\s*\d+/,'FERTILIZER'],
-  [/DRIP|SPRINKLER|LATERAL|EMITTER/,'IRRIGATION'],[/SPRAYER|PUMP|NOZZLE/,'SPRAYER / PUMP'],[/MULCH|SHADE\s*NET|POLY\s*FILM/,'MULCH / NET']];
-function catOf(name){
-  const u=name.toUpperCase();
-  for(const [re,c] of CAT_RULES) if(re.test(u)) return c;
-  const m=u.match(/^([A-Z][A-Z .]*?)\s*(-|\d|$)/);
-  return m&&m[1].trim()?m[1].trim():'OTHER';
-}
+// Categories come only from the Category column of the Item Master (Google Sheet tab "Items").
+const NO_CAT='Not set';
 const dupKey=n=>n.toUpperCase().replace(/FERTILISER/g,'FERTILIZER').replace(/SEEDS/g,'SEED').replace(/[^A-Z0-9\/.]/g,'');
 
 /* ============================== base model (on load) ============================== */
@@ -416,7 +408,7 @@ function analyse(){
   const mDays=Math.max(1,Math.round((+SET.moqMonths||3)*30.42)),lyEnd=to-365,lyStart=lyEnd-mDays+1,recStart=to-mDays+1;
   const map=new Map();
   const get=n=>{let it=map.get(n);if(!it){const m=M[n]||null;
-    it={name:n,m,cat:(m&&m.cat)||catOf(n),unit:(m&&m.unit)||'',cum:0,cumFrom:0,cumCount:0,inP:0,outP:0,billsP:0,custP:new Set(),outPP:0,billsPP:0,
+    it={name:n,m,cat:(m&&String(m.cat||"").trim())||NO_CAT,unit:(m&&m.unit)||'',cum:0,cumFrom:0,cumCount:0,inP:0,outP:0,billsP:0,custP:new Set(),outPP:0,billsPP:0,
       outB:0,billsB:0,outPrev:0,outLY:0,outRec:0,out365:0,bills365:0,cust365:new Set(),inAll:0,outAll:0,adjInP:0,adjOutP:0,adjAll:0,lastSale:null,lastBuy:null,lastBuyQty:0,lastSup:'',first:null,suppliers:new Set(),negSince:null,minBal:Infinity,minBalD:null};
     map.set(n,it)}return it};
   for(const n in M){const m=M[n];if(!m.exclude&&!m.merge&&(m.open||m.phys||m.min))get(n)}
@@ -541,6 +533,9 @@ function healthChecks(){
   const dups=[...g.values()].filter(a=>a.length>1);
   if(dups.length)out.push({lvl:'warn',t:`${dups.length} groups of item names look like duplicates`,p:'Examples: '+dups.slice(0,4).map(a=>a.map(x=>'“'+x+'”').join(' = ')).join('; ')+'. Put the main name in the "Merge Into" column of the Item Master to combine them.',act:[['Show list','dups']]});
   S.dups=dups;
+  // no category in the Item Master
+  const noCat=A.items.filter(i=>i.cat===NO_CAT);
+  if(noCat.length)out.push({lvl:'warn',t:`${noCat.length} items have no category`,p:'Categories come from the Item Master. Fill in the Category column for these items on Masters → Items, for example: '+noCat.slice(0,5).map(i=>'“'+i.name+'”').join(', ')+'.'});
   // excluded
   if(B.excluded.size)out.push({lvl:'info',t:`${B.excluded.size} non-stock ledgers left out`,p:[...B.excluded.keys()].join(', ')+'. Change the exclude list in Settings.'});
   // contra
@@ -807,7 +802,7 @@ cats(){
   for(const i of A.items){let c=m.get(i.cat);if(!c){c={cat:i.cat,n:0,sold:0,bills:0,inP:0,outP:0,close:0,neg:0,buy:0,min:0,nm:0,value:0};m.set(i.cat,c)}
     c.n++;if(i.billsP)c.sold++;c.bills+=i.billsP;c.inP+=i.inP;c.outP+=i.outP;c.close+=i.close;if(i.neg)c.neg++;if(i.buy)c.buy++;if(i.belowMin)c.min++;if(i.nonMoving&&i.close>0)c.nm++;if(i.stockValue)c.value+=i.stockValue}
   const rows=[...m.values()];const mx=Math.max(1,...rows.map(r=>r.bills));
-  return `<div class="panel"><div class="panel-h"><h2>Categories</h2><p>Item groups are worked out from the item name (seeds, fertilizer, fungicide…). Set your own in the Category column of the Item Master. Quantities mix units within a group only when the group does.</p>${expBtns('cats')}</div>
+  return `<div class="panel"><div class="panel-h"><h2>Categories</h2><p>Item groups come from the Category column of the Item Master (Masters → Items). Items with no category there are listed as “Not set”. Quantities mix units within a group only when the group does.</p>${expBtns('cats')}</div>
   ${tableHTML('cats',[{k:'cat',l:'Category',f:r=>`<button type="button" class="il" data-cat="${esc(r.cat)}">${esc(r.cat)}</button>`,x:r=>r.cat},{k:'n',l:'Items',n:1},{k:'sold',l:'Sold in period',n:1},
     {k:'bills',l:'Sale bills',n:1,f:r=>fmtInt(r.bills)+`<span class="bar" style="width:${Math.round(r.bills/mx*60)}px"></span>`},{k:'inP',l:'Inward',n:1,f:r=>fmt(r.inP)},{k:'outP',l:'Outward',n:1,f:r=>fmt(r.outP)},
     {k:'close',l:'Closing',n:1,f:r=>fmt(r.close),cls:r=>r.close<0?'neg':''},{k:'buy',l:'Buy now',n:1},{k:'min',l:'Below MOQ',n:1},{k:'neg',l:'Negative',n:1},{k:'nm',l:'Non-moving',n:1}],rows,{sort:'bills',dir:-1,title:'Categories'})}</div>`;
@@ -859,7 +854,7 @@ function masterNames(tab,activeOnly){const K=MKIND[tab],m=S.masters&&S.masters[K
   return m.rows.filter(r=>!activeOnly||!/^(inactive|exclude)/i.test(String(r.Status||''))).map(r=>cleanName(r[K.name])).filter(Boolean)}
 function masterCandidates(tab){
   const have=new Set(masterNames(tab).map(n=>n.toUpperCase()));const skip=/^\(NO NAME\)$|^CASH$|^CSH$|^JOURNAL ADJUSTMENT$|^STOCK ADJUSTMENT$/;
-  if(tab==='mItems')return S.A.items.filter(i=>!have.has(i.name.toUpperCase())).sort((a,b)=>a.name.localeCompare(b.name)).map(i=>({'Item Name':i.name,Category:i.cat,Unit:i.unit||'',Status:'Active'}));
+  if(tab==='mItems')return S.A.items.filter(i=>!have.has(i.name.toUpperCase())).sort((a,b)=>a.name.localeCompare(b.name)).map(i=>({'Item Name':i.name,Category:i.cat===NO_CAT?'':i.cat,Unit:i.unit||'',Status:'Active'}));
   const src=tab==='mCust'?S.A.cust:S.A.sup;
   return src.filter(p=>!skip.test(p.name)&&!have.has(p.name.toUpperCase())).sort((a,b)=>b.billsAll-a.billsAll).map(p=>({[MKIND[tab].name]:p.name}));
 }
@@ -888,7 +883,7 @@ function masterView(tab){
 function openDlg(title,html){$('#dlgTitle').textContent=title;$('#dlgBody').innerHTML=html;const d=$('#dlg');if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}}
 function masterForm(tab,id){
   const K=MKIND[tab],m=S.masters[K.key];const r=id?m.rows.find(x=>String(x.ID)===String(id)):null;S.mDel=null;
-  const cols=m.headers.filter(h=>h!=='ID');const cats=tab==='mItems'?[...new Set(S.A.items.map(i=>i.cat))].sort():[];
+  const cols=m.headers.filter(h=>h!=='ID');const cats=tab==='mItems'?[...new Set(S.A.items.map(i=>i.cat))].filter(c=>c!==NO_CAT).sort():[];
   openDlg(r?`Edit ${K.one}`:`New ${K.one}`,`<form id="masterForm" class="panel" data-tab="${tab}" data-id="${esc(id||'')}" novalidate>
     <div class="egrid">${cols.map((h,i)=>`<label>${esc(h)}${i===0?' *':''}<input type="text" data-col="${esc(h)}" value="${esc(r?r[h]??'':'')}" ${/categ/i.test(h)&&cats.length?'list="dlCats"':''}${/^status$/i.test(h)?'list="dlStatus"':''} autocomplete="off"></label>`).join('')}</div>
     <datalist id="dlCats">${cats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist><datalist id="dlStatus"><option value="Active"><option value="Inactive"><option value="Exclude"></datalist>
