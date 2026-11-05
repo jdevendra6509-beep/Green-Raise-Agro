@@ -1,0 +1,11 @@
+{
+  "name": "green-raise-agro-stock",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "node build/build.mjs"
+  },
+  "dependencies": {
+    "xlsx": "0.18.5"
+  }
+}

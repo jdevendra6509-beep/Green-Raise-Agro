@@ -1,0 +1,6 @@
+node_modules/
+dist/
+# Tally exports belong in data/ only
+/*.xlsx
+/*.xls
+/*.csv

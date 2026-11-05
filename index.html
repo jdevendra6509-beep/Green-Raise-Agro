@@ -1,0 +1,1315 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--PAGE-START-->
+<title>Green Raise Agro</title>
+<link rel="icon" href="img/logo.jpg">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky control bar (files + period) over a tab strip; each tab is a summary row then one working table. */
+:root{
+  --bg:#f5f6f7; --surface:#ffffff; --surface-2:#eef0f2; --line:#dde1e5; --line-2:#c9ced4;
+  --fg:#16191d; --fg-2:#4a525b; --fg-3:#6d757e;
+  --accent:#3f7a22; --accent-soft:#e6f0dc; --accent-ink:#2c5717; --on-accent:#ffffff;
+  --s-in:#1baf7a; --s-out:#2a78d6; --s-bal:#6250d6;
+  --good:#0ca30c; --warn:#b97c00; --warn-bg:#fdf1d6; --serious:#c75a2c; --serious-bg:#fbe6dc; --crit:#d03b3b; --crit-bg:#fbe3e3; --good-bg:#e2f4e2; --info-bg:#e4eefa; --info:#2a5fa8;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --side-bg:#19201a; --side-fg:#c5ccd3; --side-hi:#ffffff; --side-mute:#8a939c; --side-line:#2a332b; --side-hover:#232c24; --side-active:#23301f; --accent-side:#8cc152;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121416; --side-bg:#0d0f11; --side-line:#22272c; --side-hover:#1c2126; --side-active:#1f2a1b; --surface:#1a1d20; --surface-2:#23272b; --line:#2e3338; --line-2:#3d434a;
+  --fg:#eceef0; --fg-2:#b5bcc3; --fg-3:#8c949c;
+  --accent:#8cc152; --accent-soft:#223018; --accent-ink:#b3dc84; --on-accent:#13210b;
+  --s-in:#199e70; --s-out:#3987e5; --s-bal:#9085e9;
+  --good:#3cc23c; --warn:#e8a92a; --warn-bg:#3a2f14; --serious:#ec835a; --serious-bg:#3b2419; --crit:#ef6b6b; --crit-bg:#3d1d1d; --good-bg:#1b3320; --info-bg:#1b2a3d; --info:#8bb6ef;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121416; --side-bg:#0d0f11; --side-line:#22272c; --side-hover:#1c2126; --side-active:#1f2a1b; --surface:#1a1d20; --surface-2:#23272b; --line:#2e3338; --line-2:#3d434a;
+  --fg:#eceef0; --fg-2:#b5bcc3; --fg-3:#8c949c;
+  --accent:#8cc152; --accent-soft:#223018; --accent-ink:#b3dc84; --on-accent:#13210b;
+  --s-in:#199e70; --s-out:#3987e5; --s-bal:#9085e9;
+  --good:#3cc23c; --warn:#e8a92a; --warn-bg:#3a2f14; --serious:#ec835a; --serious-bg:#3b2419; --crit:#ef6b6b; --crit-bg:#3d1d1d; --good-bg:#1b3320; --info-bg:#1b2a3d; --info:#8bb6ef;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.45 var(--f-body);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1500px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.01em}
+h1{font-size:22px;font-weight:700}
+h2{font-size:19px;font-weight:600}
+h3{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-2)}
+.num,td.n,th.n{font-variant-numeric:tabular-nums;text-align:right}
+.mono{font-family:var(--f-mono);font-size:12.5px}
+.muted{color:var(--fg-3)}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* shell: fixed left menu + content column */
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side-bg);color:var(--side-fg);display:flex;flex-direction:column;padding:14px 12px calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));border-right:1px solid var(--side-line);scrollbar-width:thin}
+.side-brand{display:flex;align-items:center;gap:10px;padding:4px 6px 16px;border-bottom:1px solid var(--side-line);margin-bottom:10px}
+.side-brand .logo{display:block;width:36px;height:36px;border-radius:8px;background:#fff;object-fit:contain;padding:3px;flex:none}
+.side-brand b{display:block;font:600 17px/1.15 var(--f-display);color:var(--side-hi)}
+.side-brand small{display:block;font-size:12px;color:var(--side-mute)}
+.side-nav{display:grid;gap:2px;flex:1;align-content:start}
+.side-group{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--side-mute);padding:14px 10px 6px}
+.side-group:first-child{padding-top:4px}
+.side-nav button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:6px;color:var(--side-fg);font-size:14px;font-weight:500}
+.side-nav button svg{flex:none;opacity:.75}
+.side-nav button:hover{background:var(--side-hover);color:var(--side-hi)}
+.side-nav button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.side-nav button[aria-current=page]{background:var(--side-active);color:var(--side-hi);box-shadow:inset 3px 0 0 var(--accent)}
+.side-nav button[aria-current=page] svg{opacity:1;color:var(--accent-side)}
+.side-nav .ct{margin-left:auto;font:500 11.5px/1.5 var(--f-mono);padding:0 6px;border-radius:10px;background:var(--side-hover);color:var(--side-fg)}
+.side-nav .ct.hot{background:var(--crit);color:#fff}
+.side-foot{border-top:1px solid var(--side-line);padding:12px 6px 0;margin-top:12px;display:grid;gap:8px}
+.side-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--side-mute)}
+.side .files{display:grid;gap:4px}
+.side .chip{background:none;border:0;padding:0;color:var(--side-fg);font-size:12px;white-space:normal;display:flex;gap:6px;align-items:center}
+.side .chip b{font-weight:600;color:var(--side-hi)}
+.side .side-load{background:transparent;color:var(--side-fg);border-color:var(--side-line)}
+.side .side-load:hover{border-color:var(--accent);color:var(--side-hi)}
+.maincol{min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:12px max(24px,env(safe-area-inset-right,0px)) 12px 24px}
+.ptitle{margin-right:auto;min-width:0}
+.ptitle h1{font-size:22px;font-weight:600;line-height:1.15}
+.crumb{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--fg-3)}
+.pright{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.ason{font-size:12px;color:var(--fg-3)}
+.navbtn{display:none;border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:6px;line-height:0;color:var(--fg)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.files{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;background:var(--surface-2);white-space:nowrap}
+.chip b{font-weight:600}
+.chip.ok::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--good)}
+.chip.miss::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--side-mute)}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:6px 12px;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+:root[data-theme="dark"] .btn.pri{color:#1a1d20}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.pri{color:#1a1d20}}
+.btn.sm{padding:3px 9px;font-size:12.5px}
+.period{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.period input[type=date],.period select,.tool input,.tool select,.set input,.set select{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:5px 8px;min-width:0}
+.period label{color:var(--fg-3)}
+main{padding:22px max(24px,env(safe-area-inset-right,0px)) 60px 24px;max-width:1440px;width:100%}
+.sample .inner{padding:7px 24px}
+.scrim{position:fixed;inset:0;background:rgb(0 0 0 / .4);z-index:39}
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;left:0;top:0;bottom:0;width:min(280px,84vw);z-index:40;transform:translateX(-102%);transition:transform .2s ease;padding-top:calc(14px + env(safe-area-inset-top,0px))}
+  .side.open{transform:none;box-shadow:0 0 40px rgb(0 0 0 / .35)}
+  .navbtn{display:inline-flex}
+  .topbar{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .sample .inner{padding-inline:16px}
+  .pright{align-items:flex-start;width:100%}
+  .ptitle h1{font-size:19px}
+}
+.view{display:grid;gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.panel-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:10px}
+.panel-h p{margin:0;color:var(--fg-3);font-size:13px;flex-basis:100%}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:18px}
+.lede{color:var(--fg-2);margin:0;max-width:80ch}
+
+/* KPI tiles */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:11px 14px;text-align:left;display:grid;gap:2px;min-width:0}
+button.kpi:hover{border-color:var(--accent)}
+.kpi .l{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-3)}
+.kpi .v{font-family:var(--f-display);font-weight:600;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12.5px;color:var(--fg-3)}
+.kpi.crit .v{color:var(--crit)} .kpi.serious .v{color:var(--serious)} .kpi.warn .v{color:var(--warn)}
+
+/* status pills */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:1px 8px;border-radius:4px;white-space:nowrap}
+.pill::before{font-size:9px}
+.pill.crit{background:var(--crit-bg);color:var(--crit)} .pill.crit::before{content:"■"}
+.pill.serious{background:var(--serious-bg);color:var(--serious)} .pill.serious::before{content:"▲"}
+.pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.warn::before{content:"●"}
+.pill.good{background:var(--good-bg);color:var(--good)} .pill.good::before{content:"✓"}
+.pill.info{background:var(--info-bg);color:var(--info)} .pill.info::before{content:"i";font-style:italic;font-family:serif;font-size:11px}
+.dir{font-size:12px;font-weight:500;white-space:nowrap}.dir::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}.dir.in::before{background:var(--s-in)}.dir.out::before{background:var(--s-out)}
+dialog .kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr))}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:12px}
+.seg button{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:8px 10px;text-align:left;display:grid;gap:2px;min-width:0}
+.seg button span{font-size:12px;color:var(--fg-3)}
+.seg button.on{border-color:var(--accent);background:var(--accent-soft)}
+.egrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:10px;margin-bottom:10px}
+#entryForm label{display:grid;gap:4px;font-size:13px;color:var(--fg-2)}
+#entryForm input,#entryForm select,#entryForm textarea{border:1px solid var(--line-2);background:var(--surface);color:var(--fg);border-radius:var(--r);padding:7px 9px;font:inherit;min-width:0;width:100%}
+#entryForm .full{margin-top:10px}
+.elines{display:grid;gap:8px;margin:10px 0}
+.eline{display:grid;grid-template-columns:minmax(0,1fr) 120px auto;gap:6px;align-items:center}
+.eline .enHint{grid-column:1/-1;font-size:12.5px;margin-top:-2px}
+.enote{background:var(--warn-bg);padding:8px 10px;border-radius:6px;font-size:13px;margin:0 0 6px}
+.eerr{color:var(--crit);font-size:13px;margin:6px 0}
+@media (max-width:640px){.seg{grid-template-columns:1fr}.eline{grid-template-columns:minmax(0,1fr) 90px auto}}
+.pill.flat{background:var(--surface-2);color:var(--fg-2)}
+
+/* toolbar + tables */
+.tool{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.tool input[type=search]{flex:1 1 220px;max-width:340px}
+.tool .sp{margin-left:auto;display:flex;gap:6px}
+.tool label{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--fg-2)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;max-height:70vh}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{position:sticky;top:0;background:var(--surface-2);z-index:1;text-align:left;font-weight:600;font-size:12px;color:var(--fg-2);border-bottom:1px solid var(--line-2);white-space:nowrap;padding:0}
+th button{all:unset;cursor:pointer;display:block;padding:7px 9px;width:100%;box-sizing:border-box}
+th.n button{text-align:right}
+th button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+th[aria-sort=ascending] button::after{content:" ▲";font-size:9px}
+th[aria-sort=descending] button::after{content:" ▼";font-size:9px}
+td{padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+tbody tr:hover td{background:var(--surface-2)}
+td.item{white-space:normal;min-width:180px;max-width:320px}
+a.il,button.il{all:unset;cursor:pointer;color:var(--fg);border-bottom:1px dotted var(--fg-3)}
+a.il:hover,button.il:hover{color:var(--accent);border-bottom-color:var(--accent)}
+button.il:focus-visible{outline:2px solid var(--accent)}
+td.neg{color:var(--crit);font-weight:600}
+tfoot td{font-weight:600;background:var(--surface-2);position:sticky;bottom:0}
+.more{display:flex;gap:10px;align-items:center;padding:8px 2px 0;font-size:13px;color:var(--fg-3)}
+.bar{display:inline-block;height:6px;border-radius:0 3px 3px 0;background:var(--s-out);vertical-align:middle;margin-left:6px}
+.empty{padding:28px 10px;text-align:center;color:var(--fg-3)}
+
+/* alerts */
+.alerts{display:grid;gap:8px}
+.alert{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start;padding:10px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface)}
+.alert .t{font-weight:600}
+.alert p{margin:2px 0 0;color:var(--fg-2);font-size:13px;max-width:95ch}
+.alert .act{grid-column:2;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+
+/* drop zone */
+.drop{border:2px dashed var(--line-2);border-radius:10px;padding:26px 18px;text-align:center;background:var(--surface);display:grid;gap:10px;justify-items:center}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop ol{text-align:left;margin:0;padding-left:20px;color:var(--fg-2);max-width:70ch}
+.loadpanel{margin-top:0}
+
+.chartbox{position:relative;height:260px}
+.chartbox.sm{height:220px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--fg-2);margin-bottom:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.matrix{display:grid;grid-template-columns:auto repeat(3,1fr);gap:4px;font-size:13px}
+.matrix div{padding:8px;border-radius:4px;background:var(--surface-2);text-align:center;font-variant-numeric:tabular-nums}
+.matrix .h{background:none;color:var(--fg-3);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.matrix button{all:unset;cursor:pointer;display:block;padding:8px;border-radius:4px;text-align:center;font-variant-numeric:tabular-nums;background:var(--surface-2)}
+.matrix button:hover{outline:1px solid var(--accent)}
+
+/* settings */
+.set{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:14px}
+.set label{display:grid;gap:4px;font-size:13px}
+.set label span{color:var(--fg-3);font-size:12px}
+.set input,.set select{width:100%}
+textarea{width:100%;min-height:60px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface);color:var(--fg);font:12.5px var(--f-mono);padding:6px}
+
+/* modal */
+dialog{border:1px solid var(--line-2);border-radius:10px;padding:0;background:var(--bg);color:var(--fg);width:min(1100px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgb(0 0 0 / .45)}
+.dlg-h{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;z-index:2}
+.dlg-b{padding:16px;display:grid;gap:16px}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;z-index:50}
+.sample{background:var(--warn-bg);color:var(--fg);border-bottom:1px solid var(--line)}
+.sample{font-size:13px}
+@media (max-width:640px){.kpi .v{font-size:24px}.top{position:static}.tw{max-height:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="shell">
+<aside class="side" id="side" aria-label="Main menu">
+  <div class="side-brand"><img class="logo" src="img/logo.jpg" alt=""><div><b>Green Raise Agro</b><small id="coName">Stock Control</small></div></div>
+  <nav class="side-nav" id="tabs"></nav>
+  <div class="side-foot">
+    <div class="side-label">Data sources</div>
+    <div class="files" id="fileChips"></div>
+  </div>
+</aside>
+<div class="scrim" id="scrim" hidden></div>
+<div class="maincol">
+<header class="top">
+  <div class="topbar">
+    <button class="navbtn" id="navToggle" type="button" aria-label="Open menu" aria-controls="side" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
+    <div class="ptitle"><div class="crumb" id="pageGroup"></div><h1 id="pageTitle">Overview</h1></div>
+    <div class="pright"><div class="period" id="periodBar">
+      <label for="pPreset" class="sr">Period</label>
+      <select id="pPreset">
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="180">Last 180 days</option>
+        <option value="365">Last 365 days</option>
+        <option value="month">This month</option>
+        <option value="lmonth">Last month</option>
+        <option value="fy">This financial year</option>
+        <option value="lfy">Last financial year</option>
+        <option value="all">All data</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label for="pFrom">From</label><input type="date" id="pFrom">
+      <label for="pTo">To</label><input type="date" id="pTo">
+      
+    </div><span class="ason" id="asOn"></span></div>
+  </div>
+</header>
+<div class="sample" id="sampleBar" hidden><div class="inner" id="sampleText"></div></div>
+<main id="main"></main>
+</div>
+</div>
+
+<dialog id="dlg"><div class="dlg-h"><h2 id="dlgTitle" style="margin-right:auto"></h2><button class="btn sm" id="dlgClose" type="button">Close</button></div><div class="dlg-b" id="dlgBody"></div></dialog>
+<input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.csv" multiple hidden>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/* Offline fallback: when opened from the folder without internet, use the bundled copies in lib/ */
+if(!window.XLSX) document.write('<script src="lib/xlsx.full.min.js"><\/script>');
+if(!window.Chart) document.write('<script src="lib/chart.umd.min.js"><\/script>');
+</script>
+<script src="js/parse.js"></script>
+<!--SNAPSHOT-->
+<script>
+"use strict";
+/* ============================== helpers ============================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const dObj=d=>new Date(d*864e5);
+const dstr=d=>{if(d==null||isNaN(d))return '–';const t=dObj(d);return pad(t.getUTCDate())+'-'+MON[t.getUTCMonth()]+'-'+String(t.getUTCFullYear()).slice(2)};
+const iso=d=>dObj(d).toISOString().slice(0,10);
+const fromIso=s=>Math.floor(Date.parse(s+'T00:00:00Z')/864e5);
+const today=()=>{const t=new Date();return Math.floor(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate())/864e5)};
+const ym=d=>{const t=dObj(d);return t.getUTCFullYear()*12+t.getUTCMonth()};
+const ymLabel=k=>MON[k%12]+'-'+String(Math.floor(k/12)).slice(2);
+const ymStart=k=>Math.floor(Date.UTC(Math.floor(k/12),k%12,1)/864e5);
+const nf=new Intl.NumberFormat('en-IN',{maximumFractionDigits:2});
+const nf0=new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
+const fmt=(n,d)=>n==null||!isFinite(n)?'–':(d===0||Math.abs(n)>=1000?nf0:nf).format(n);
+const fmtInt=n=>n==null||!isFinite(n)?'–':nf0.format(n);
+const daysTxt=n=>n==null||!isFinite(n)?'–':n>999?'999+':fmtInt(n);
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+const store={
+  get(k,def){try{const v=localStorage.getItem('gra.'+k);return v==null?def:JSON.parse(v)}catch(e){return def}},
+  set(k,v){try{localStorage.setItem('gra.'+k,JSON.stringify(v))}catch(e){}}
+};
+const idb={
+  open(){return new Promise((res,rej)=>{try{const r=indexedDB.open('gra-stock',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}})},
+  async get(k){try{const db=await this.open();return await new Promise(res=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(undefined)})}catch(e){return undefined}},
+  async set(k,v){try{const db=await this.open();await new Promise(res=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=res;tx.onerror=res})}catch(e){}},
+  async del(k){try{const db=await this.open();await new Promise(res=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').delete(k);tx.oncomplete=res;tx.onerror=res})}catch(e){}}
+};
+
+/* ============================== settings ============================== */
+const DEFAULTS={
+  leadDays:15,      // days between placing an order and receiving it
+  safetyDays:7,     // extra buffer days
+  coverDays:30,     // after the stock arrives, buy enough for this many days
+  basisDays:90,     // sales window used for average daily sale
+  moqBasis:'ly',    // automatic MOQ when the Item Master has none: 'ly' = same months last year, 'recent' = latest months
+  moqMonths:3,      // MOQ = average monthly sale over this many months
+  minBills:2,       // an item must have at least this many sale bills in the sales window to appear in Buy Now
+  nmDays:180,       // no sale for this many days = non-moving
+  fastBills:24,     // 24+ sale bills in 365 days = fast moving
+  excessDays:180,   // stock covering more than this many days of sale = excess
+  exclude:'BED DEBTS|BAD DEBTS|DISCOUNT|ROUND OFF|FREIGHT|TRANSPORT|CARTAGE|LABOUR|GST'
+};
+let SET=Object.assign({},DEFAULTS,store.get('settings',{}));
+
+/* ============================== state ============================== */
+const S={files:{Payment:null,Receipt:null,Journal:null,Master:null,Opening:null},base:null,A:null,tab:'overview',from:null,to:null,preset:'90',source:null,srcAt:null,hosted:null,locked:false,unlockErr:'',charts:{},tstate:{}};
+
+
+/* ============================== categories ============================== */
+const CAT_RULES=[[/\bSEEDS?\b|HYBRID|\bF1\b/,'SEEDS'],[/FUNGICIDE/,'FUNGICIDE'],[/INSECTICIDE/,'INSECTICIDE'],[/HERBICIDE|WEEDICIDE/,'HERBICIDE'],
+  [/PESTICIDE/,'PESTICIDE'],[/\bPGR\b|GROWTH\s*(REG|PROMOT)/,'GROWTH REGULATOR'],[/MICRO\s*NUTRIENT|CHELATED|\bZINC\b|\bBORON\b/,'MICRONUTRIENT'],
+  [/\bBIO|ORGANIC|COMPOST|VERMI/,'BIO / ORGANIC'],[/\bNPK\b|\bUREA\b|\bDAP\b|\bMOP\b|\bSSP\b|FERTI?LI[SZ]ER|\d+\s*:\s*\d+\s*:\s*\d+/,'FERTILIZER'],
+  [/DRIP|SPRINKLER|LATERAL|EMITTER/,'IRRIGATION'],[/SPRAYER|PUMP|NOZZLE/,'SPRAYER / PUMP'],[/MULCH|SHADE\s*NET|POLY\s*FILM/,'MULCH / NET']];
+function catOf(name){
+  const u=name.toUpperCase();
+  for(const [re,c] of CAT_RULES) if(re.test(u)) return c;
+  const m=u.match(/^([A-Z][A-Z .]*?)\s*(-|\d|$)/);
+  return m&&m[1].trim()?m[1].trim():'OTHER';
+}
+const dupKey=n=>n.toUpperCase().replace(/FERTILISER/g,'FERTILIZER').replace(/SEEDS/g,'SEED').replace(/[^A-Z0-9\/.]/g,'');
+
+/* ============================== base model (on load) ============================== */
+// Dates from the Google Sheet can arrive as 2026-11-02, as an ISO time, or as a full date text
+// ("Mon Nov 02 2026 00:00:00 GMT+0530"), depending on the script version. All mean the sheet's own day.
+function sheetDay(v){
+  if(v==null||v==='')return null;
+  if(typeof v==='number')return toDay(v);
+  const s=String(v).trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m)return Math.floor(Date.UTC(+m[1],+m[2]-1,+m[3])/864e5);
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+  if(m){const t=Date.parse(s);if(!isNaN(t))return Math.floor((t+330*60000)/864e5)} // ISO time: take the India date
+  m=s.match(/\b([A-Z][a-z]{2})\s+(\d{1,2})\s+(\d{4})\b/);
+  if(m){const mi=MON.indexOf(m[1]);if(mi>=0)return Math.floor(Date.UTC(+m[3],mi,+m[2])/864e5)}
+  const d=toDay(s);return d==null||isNaN(d)?null:d;
+}
+function buildBase(){
+  // Item master: the Google Sheet "Items" tab, on top of any Excel Item Master loaded
+  const M0=Object.assign({},S.files.Master?S.files.Master.items:{});
+  for(const [n,m] of Object.entries(sheetItemMaster())){const o=Object.assign({},M0[n]||{name:n});for(const k in m)if(m[k]!==null&&m[k]!==undefined&&m[k]!=='')o[k]=m[k];M0[n]=o}
+  let exRe=null;try{exRe=SET.exclude.trim()?new RegExp('^('+SET.exclude+')$','i'):null}catch(e){exRe=null}
+  // Trial Balance closing quantities become a stock count on its date, unless the Item Master gives opening or physical stock
+  const M=Object.assign({},M0);let tbN=0;
+  if(S.files.Opening){const O=S.files.Opening;for(const [n0,q] of Object.entries(O.items)){
+    const n=(M0[n0]&&M0[n0].merge)||n0;if((exRe&&exRe.test(n))||(M0[n]&&M0[n].exclude))continue;const m=M[n];
+    if(m&&!m.fromTB&&(m.open!=null||m.phys!=null))continue;
+    M[n]=Object.assign({name:n},m||{},{phys:(m&&m.fromTB?m.phys:0)+q,cdate:O.asOn,fromTB:true});tbN++}}
+  const alias=n=>{const m=M[n];return m&&m.merge?m.merge:n};
+  const excluded=new Map(),lines=[],vouchers=[],contra=new Map();
+  // Receipt = stock in, Payment = stock out; Journal lines are adjustments that change stock but are not purchases or sales
+  for(const kind of ['Receipt','Payment','Journal']){
+    const f=S.files[kind];if(!f)continue;const adj=kind==='Journal';const t0=kind==='Receipt'?1:-1;
+    for(const v of f.vouchers){
+      const party=adj?(cleanParty(v.party)==='(NO NAME)'?'JOURNAL ADJUSTMENT':cleanParty(v.party)):cleanParty(v.party);
+      const vo={d:v.d,t:adj?0:t0,adj,vno:v.vno,party,rawParty:v.party,n:v.items.length,cond:v.cond,cancel:v.cancel};
+      vouchers.push(vo);if(v.cancel)continue;
+      v.contra.forEach(c=>contra.set(c,(contra.get(c)||0)+1));
+      for(const [n0,q0] of v.items){const n=alias(n0);
+        if((M[n]&&M[n].exclude)||(exRe&&exRe.test(n))){excluded.set(n,(excluded.get(n)||0)+1);continue}
+        const t=adj?(q0>0?1:-1):t0,q=Math.abs(q0);
+        lines.push({d:v.d,t,item:n,q,vno:v.vno,party,cond:v.cond,adj,v:vo});
+      }
+    }
+  }
+  const tallyEnd=vouchers.length?Math.max(...vouchers.map(v=>v.d)):null;
+  // entries made on the New Entry page (Google Sheet): Inward / Outward like Tally, Adjustment like the Journal
+  const app=S.files.App;let appN=0,badDate=0;const allRows=[];
+  if(app){const g=new Map();for(const r of app.rows){if(/deleted/i.test(r.status||''))continue;if(!g.has(r.id))g.set(r.id,[]);g.get(r.id).push(r)}
+    for(const rs of g.values()){const r0=rs[0];const d=sheetDay(r0.date);if(d==null){badDate+=rs.length;continue}
+      const ty=/^in/i.test(r0.type)?'IN':/^out/i.test(r0.type)?'OUT':'ADJ',adj=ty==='ADJ',t0=ty==='IN'?1:-1;
+      const party=r0.party?cleanParty(r0.party):adj?'STOCK ADJUSTMENT':'(NO NAME)';
+      const vo={d,t:adj?0:t0,adj,app:true,id:r0.id,vno:r0.bill||('APP-'+r0.id),party,rawParty:(r0.party||'')+' '+(r0.narration||''),n:rs.length,cond:false,cancel:false};
+      vouchers.push(vo);appN++;
+      for(const r of rs){if(adj&&/^\*?\s*all items\s*\*?$/i.test(cleanName(r.item))&&r.counted!=null&&isFinite(+r.counted)){allRows.push({d,vo,party,counted:+r.counted});continue}
+        const n=alias(cleanName(r.item));const q0=+r.qty;if(!n||!q0||!isFinite(q0))continue;
+        if((M[n]&&M[n].exclude)||(exRe&&exRe.test(n))){excluded.set(n,(excluded.get(n)||0)+1);continue}
+        lines.push({d,t:adj?(q0>0?1:-1):t0,item:n,q:Math.abs(q0),vno:vo.vno,party,cond:false,adj,app:true,v:vo,counted:adj&&r.counted!=null&&isFinite(+r.counted)?+r.counted:null})}}}
+  // "ALL ITEMS" with a counted stock sets every item to that figure (used for a full stock reset)
+  if(allRows.length){const names=new Set(lines.map(l=>l.item));for(const [n,m] of Object.entries(M))if(!m.exclude&&!m.merge)names.add(n);
+    for(const a of allRows)for(const n of names)lines.push({d:a.d,t:1,item:n,q:0,vno:a.vo.vno,party:a.party,cond:false,adj:true,app:true,v:a.vo,counted:a.counted})}
+  // a counted-stock adjustment applies after that day's other movements
+  lines.sort((a,b)=>a.d-b.d||((a.counted!=null)-(b.counted!=null))||b.t-a.t);
+  vouchers.sort((a,b)=>a.d-b.d);
+  const byItem=new Map();for(const l of lines){if(!byItem.has(l.item))byItem.set(l.item,[]);byItem.get(l.item).push(l)}
+  const live=vouchers.filter(v=>!v.cancel);
+  const dMin=live.length?live[0].d:today();
+  const dMax=Math.max(live.length?live[live.length-1].d:today(),app?today():0);
+  S.base={lines,vouchers,excluded,contra,dMin,dMax,M,tbN,byItem,tallyEnd,appN,badDate};
+}
+
+/* ============================== analysis (on period / settings change) ============================== */
+function analyse(){
+  const B=S.base;if(!B)return;const M=B.M;
+  const to=S.to,from=S.from,bd=SET.basisDays;
+  const bStart=to-bd+1,prevStart=bStart-bd,y1=to-364,plen=to-from+1,ppStart=from-plen;
+  const mDays=Math.max(1,Math.round((+SET.moqMonths||3)*30.42)),lyEnd=to-365,lyStart=lyEnd-mDays+1,recStart=to-mDays+1;
+  const map=new Map();
+  const get=n=>{let it=map.get(n);if(!it){const m=M[n]||null;
+    it={name:n,m,cat:(m&&m.cat)||catOf(n),unit:(m&&m.unit)||'',cum:0,cumFrom:0,cumCount:0,inP:0,outP:0,billsP:0,custP:new Set(),outPP:0,billsPP:0,
+      outB:0,billsB:0,outPrev:0,outLY:0,outRec:0,out365:0,bills365:0,cust365:new Set(),inAll:0,outAll:0,adjInP:0,adjOutP:0,adjAll:0,lastSale:null,lastBuy:null,lastBuyQty:0,lastSup:'',first:null,suppliers:new Set(),negSince:null,minBal:Infinity,minBalD:null};
+    map.set(n,it)}return it};
+  for(const n in M){const m=M[n];if(!m.exclude&&!m.merge&&(m.open||m.phys||m.min))get(n)}
+  const hasCount=Object.values(M).some(m=>m.phys!=null);
+  if(hasCount)for(const l of B.lines){if(l.d>to)break;const m=M[l.item];if(m&&m.phys!=null&&l.d<=m.cdate)get(l.item).cumCount+=l.t*l.q}
+  for(const it of map.values())it.K=it.m&&it.m.phys!=null?it.m.phys-it.cumCount:(it.m&&it.m.open)||0;
+  // pass 2
+  for(const l of B.lines){
+    if(l.d>to)break;const it=get(l.item);
+    if(it.K===undefined)it.K=it.m&&it.m.phys!=null?it.m.phys-it.cumCount:(it.m&&it.m.open)||0;
+    // counted stock from the New Entry page: the adjustment is whatever brings stock to the counted figure
+    if(l.counted!=null){const dq=Math.round((l.counted-(it.K+it.cum))*1000)/1000;l.t=dq>=0?1:-1;l.q=Math.abs(dq)}
+    const net=l.t*l.q;it.cum+=net;if(l.d<from)it.cumFrom+=net;
+    if(it.first==null)it.first=l.d;
+    const bal=it.K+it.cum;
+    if(bal<-1e-9){if(it.negSince==null)it.negSince=l.d}else it.negSince=null;
+    if(bal<it.minBal){it.minBal=bal;it.minBalD=l.d}
+    if(l.adj){it.adjAll+=l.t*l.q;if(l.d>=from){if(l.t>0)it.adjInP+=l.q;else it.adjOutP+=l.q}continue}
+    if(l.t>0){it.inAll+=l.q;it.lastBuy=l.d;it.lastBuyQty=l.q;it.lastSup=l.party;it.suppliers.add(l.party);if(l.d>=from)it.inP+=l.q}
+    else{
+      it.outAll+=l.q;it.lastSale=l.d;
+      if(l.d>=from){it.outP+=l.q;it.billsP++;it.custP.add(l.party)}
+      else if(l.d>=ppStart){it.outPP+=l.q;it.billsPP++}
+      if(l.d>=bStart){it.outB+=l.q;it.billsB++}else if(l.d>=prevStart)it.outPrev+=l.q;
+      if(l.d>=lyStart&&l.d<=lyEnd)it.outLY+=l.q;if(l.d>=recStart)it.outRec+=l.q;
+      if(l.d>=y1){it.out365+=l.q;it.bills365++;it.cust365.add(l.party)}
+    }
+  }
+  const items=[...map.values()];
+  // values for ABC
+  const rated=items.filter(i=>i.m&&i.m.rate).length;const byValue=rated>=items.length*0.5&&rated>0;
+  for(const it of items){
+    const m=it.m||{};
+    // quantities carry at most 3 decimals; rounding removes floating-point leftovers such as 1e-15
+    it.close=Math.round((it.K+it.cum)*1000)/1000+0;it.openP=Math.round((it.K+it.cumFrom)*1000)/1000+0;
+    it.ads=it.outB/bd;it.monthly=it.ads*30;
+    it.lead=m.lead||SET.leadDays;
+    it.cover=it.ads>0?Math.max(0,it.close)/it.ads:(it.close>0?Infinity:0);
+    const mm=+SET.moqMonths||3,useLY=SET.moqBasis!=='recent'&&it.outLY>0;
+    it.minSrc=m.min!=null?'Master':useLY?'Last year':'Recent';
+    it.min=m.min!=null?m.min:Math.ceil((useLY?it.outLY:it.outRec)/mm);
+    it.rop=Math.max(it.min,it.ads*(it.lead+SET.safetyDays));
+    it.active=it.billsB>=SET.minBills;
+    let target=Math.max(it.min,it.ads*(it.lead+SET.coverDays));if(m.max)target=Math.min(Math.max(target,it.min),m.max);
+    it.suggest=Math.max(0,Math.ceil(target-Math.max(0,it.close)));
+    it.buy=it.active&&it.close<=it.rop&&it.suggest>0;
+    it.urg=!it.buy?0:it.close<=0?3:it.cover<it.lead?2:1;
+    it.belowMin=it.min>0&&it.close<it.min;it.short=it.belowMin?it.min-it.close:0;
+    it.neg=it.close<-1e-9;
+    it.idle=it.lastSale==null?Infinity:to-it.lastSale;
+    it.nonMoving=it.idle>SET.nmDays;
+    it.fsn=it.nonMoving?'N':it.bills365>=SET.fastBills?'F':'S';
+    it.excess=it.close>0&&((m.max&&it.close>m.max)||(it.ads>0&&it.cover>SET.excessDays));
+    it.trend=it.outPrev>0?(it.outB-it.outPrev)/it.outPrev:(it.outB>0?null:0);
+    it.value=byValue?(it.out365*(m.rate||0)):it.bills365;
+    it.stockValue=m.rate?Math.max(0,it.close)*m.rate:null;
+  }
+  // ABC
+  const sorted=items.filter(i=>i.value>0).sort((a,b)=>b.value-a.value);const tot=sorted.reduce((s,i)=>s+i.value,0);let c=0;
+  items.forEach(i=>i.abc='C');for(const i of sorted){const share=c/tot;i.abc=share<0.7?'A':share<0.9?'B':'C';c+=i.value}
+  items.forEach(i=>{if(i.value<=0)i.abc='–'});
+  // parties
+  const cust=new Map(),sup=new Map();
+  for(const v of B.vouchers){
+    if(v.cancel||v.adj||v.d>to)continue;const M2=v.t<0?cust:sup;
+    let p=M2.get(v.party);if(!p){p={name:v.party,bills:0,lines:0,items:new Set(),first:v.d,last:v.d,billsPrev180:0,billsLast60:0,billsAll:0};M2.set(v.party,p)}
+    p.billsAll++;p.last=Math.max(p.last,v.d);p.first=Math.min(p.first,v.d);
+    if(v.d>=from){p.bills++;p.lines+=v.n}
+    if(v.d>to-60)p.billsLast60++;else if(v.d>to-240)p.billsPrev180++;
+  }
+  for(const l of B.lines){if(l.d>to)break;if(l.d<from||l.adj)continue;const p=(l.t<0?cust:sup).get(l.party);if(p)p.items.add(l.item)}
+  // monthly
+  const months=new Map();
+  for(const v of B.vouchers){if(v.cancel||v.adj)continue;const k=ym(v.d);let m=months.get(k);if(!m){m={k,sale:0,rec:0,saleLines:0,recLines:0,cond:0};months.set(k,m)}
+    if(v.t<0){m.sale++;m.saleLines+=v.n;if(v.cond)m.cond++}else{m.rec++;m.recLines+=v.n}}
+  S.A={moqLabel:SET.moqBasis!=='recent'?`average monthly sale in the same ${mDays} days last year (${dstr(lyStart)} to ${dstr(lyEnd)}); items with no sale then use the latest ${SET.moqMonths} months`:`average monthly sale in the latest ${SET.moqMonths} months (${dstr(recStart)} to ${dstr(to)})`,items,cust:[...cust.values()],sup:[...sup.values()],months:[...months.values()].sort((a,b)=>a.k-b.k),byValue,
+    from,to,plen,bStart};
+  S.A.health=healthChecks();
+}
+
+/* ============================== data health ============================== */
+function healthChecks(){
+  const B=S.base,A=S.A,out=[];const P=S.files.Payment,R=S.files.Receipt;
+  const tally=!!(P||R);
+  if(tally&&(!P||!R))out.push({lvl:'crit',t:`${!P?'Payment (outward)':'Receipt (inward)'} file not loaded`,p:'Stock balances need both files. Load the missing register with "Load / replace files".'});
+  const hasOpen=S.files.Opening||(S.files.Master&&Object.values(S.files.Master.items).some(m=>m.open!=null||m.phys!=null));
+  const negN=A.items.filter(i=>i.neg).length;
+  if(B.badDate)out.push({lvl:'serious',t:`${B.badDate} rows in the Google Sheet were skipped`,p:'Their date could not be read. Check the Date column in the Entries sheet holds a real date.'});
+  if(S.files.App)out.push({lvl:'info',t:`${B.appN} entries from the New Entry page`,p:`Read live from the Google Sheet. Inward adds stock, Outward is a sale, Adjustment changes stock only.`});
+  else if(S.appState==='error')out.push({lvl:'warn',t:'Entries from the Google Sheet could not be loaded',p:S.appErr||'Refresh the page to try again.'});
+  const J=S.files.Journal;
+  if(J){const jl=B.lines.filter(l=>l.adj);const jo=jl.filter(l=>l.t<0).length,ji=jl.length-jo;
+    out.push({lvl:'info',t:`${jl.length} bad-debt adjustments from the Journal register`,p:`${jo} lines wrote stock off and ${ji} added stock back, across ${new Set(jl.map(l=>l.item)).size} items. They change stock balances but not sales, purchases or averages. See them in Entries → Bad debts adjustments.`})}
+  const O=S.files.Opening;
+  if(O){const gap=B.dMin-O.asOn-1;
+    out.push({lvl:gap>0?'warn':'info',t:`Opening stock from the Trial Balance as on ${dstr(O.asOn)}`,p:`Applied to ${B.tbN} items. ${gap>0?`The registers start on ${dstr(B.dMin)}, ${gap} days later, so movements in between are missing. Export the Trial Balance up to ${dstr(B.dMin-1)}.`:gap<0?`It is dated after the registers start, so it is treated as a stock count on that date.`:'It ends the day before the registers start, as it should.'} An Opening Stock or Physical Stock in the Item Master overrides it for that item.`})}
+  if(tally&&!hasOpen)out.push({lvl:'serious',t:'Opening stock not entered',p:`The registers start on ${dstr(B.dMin)} and carry no opening balance, so ${negN} of ${A.items.length} items show negative stock. Download the Item Master, fill "Opening Stock" (as on ${dstr(B.dMin)}) or a "Physical Stock" with its "Count Date", and load it here once. MOQ, lead time and rate go in the same sheet.`,act:[['Download Item Master','master']]});
+  // inward gap
+  const ms=A.months.filter(m=>m.k<ym(B.dMax));
+  if(tally&&ms.length>=4){
+    const med=[...ms.map(m=>m.rec)].sort((a,b)=>a-b)[Math.floor(ms.length/2)];
+    const low=A.months.filter(m=>m.rec<med*0.25);
+    if(low.length&&med>=8){
+      const runs=[];for(const m of low){const r=runs[runs.length-1];if(r&&r.end===m.k-1){r.end=m.k;r.n.push(m.rec)}else runs.push({start:m.k,end:m.k,n:[m.rec]})}
+      runs.forEach(r=>out.push({lvl:'serious',t:`Inward entries look incomplete: ${ymLabel(r.start)}${r.end>r.start?' to '+ymLabel(r.end):''}`,
+        p:`Only ${r.n.join(', ')} receipt voucher${r.n.length>1?'s per month':''} were found against a usual ${med} a month. If purchases in this period were not entered as Receipt vouchers, stock for those items will look lower than it really is, and Buy Now will over-suggest.`}));
+    }
+  }
+  // condensed
+  for(const f of [P,R]){if(!f)continue;const c=f.vouchers.filter(v=>v.cond);if(c.length){const d0=Math.min(...c.map(v=>v.d)),d1=Math.max(...c.map(v=>v.d));
+    out.push({lvl:'serious',t:`${c.length} ${f.kind} vouchers exported in condensed form (${dstr(d0)} to ${dstr(d1)})`,p:`These rows show one item and one amount per voucher, without the item break-up. For bills with several items, only the first item is counted, against the full bill quantity. In Tally, open the ${f.kind} Register, press Alt+F5 (Detailed) and export again.`})}}
+  // period mismatch
+  if(P&&R&&P.pTo&&R.pTo&&P.pTo!==R.pTo)out.push({lvl:'info',t:'The two files cover different periods',p:`Payment file: ${P.periodText}. Receipt file: ${R.periodText}. Export both for the same period so stock is compared like for like.`});
+  if(P&&R&&P.pFrom&&R.pFrom&&P.pFrom!==R.pFrom)out.push({lvl:'info',t:'The two files start on different dates',p:'Movements before the later start date are only partly captured.'});
+  // cancelled
+  const canc=B.vouchers.filter(v=>v.cancel).length;if(canc)out.push({lvl:'info',t:`${canc} cancelled vouchers ignored`,p:'Cancelled entries carry no quantity and are left out of every figure.'});
+  // never received
+  const nr=A.items.filter(i=>i.inAll===0&&i.outAll>0&&!(i.m&&(i.m.open||i.m.phys)));
+  if(nr.length)out.push({lvl:'warn',t:`${nr.length} items were sold but never received in these files`,p:'These were sold from stock that existed before the files start, or the purchase was entered under a different item name. Check the item names or give them an opening stock.',act:[['Show list','neverIn']]});
+  // duplicates
+  const g=new Map();for(const i of A.items){const k=dupKey(i.name);if(!g.has(k))g.set(k,[]);g.get(k).push(i.name)}
+  const dups=[...g.values()].filter(a=>a.length>1);
+  if(dups.length)out.push({lvl:'warn',t:`${dups.length} groups of item names look like duplicates`,p:'Examples: '+dups.slice(0,4).map(a=>a.map(x=>'“'+x+'”').join(' = ')).join('; ')+'. Put the main name in the "Merge Into" column of the Item Master to combine them.',act:[['Show list','dups']]});
+  S.dups=dups;
+  // excluded
+  if(B.excluded.size)out.push({lvl:'info',t:`${B.excluded.size} non-stock ledgers left out`,p:[...B.excluded.keys()].join(', ')+'. Change the exclude list in Settings.'});
+  // contra
+  const oddC=[...B.contra.entries()].filter(([n])=>!/^(cash|bank|.*bank.*|petty cash)$/i.test(n));
+  if(oddC.length)out.push({lvl:'warn',t:'Some vouchers have an unusual opposite ledger',p:'Treated as the money side and ignored for stock: '+oddC.slice(0,8).map(([n,c])=>`${n} (${c})`).join(', ')+'. If these are items, the entry was posted on the wrong side.'});
+  const noName=B.vouchers.filter(v=>!v.cancel&&v.party==='(NO NAME)').length;
+  if(noName)out.push({lvl:'info',t:`${noName} vouchers have no party in the narration`,p:'Customer and supplier lists group them under "(NO NAME)". Write the party name in the narration to track them.'});
+  if(!out.some(o=>o.lvl==='crit'||o.lvl==='serious'))out.unshift({lvl:'good',t:'No major data issues found',p:tally?'Both registers loaded in detailed form.':'Entries and masters loaded from the Google Sheet.'});
+  return out;
+}
+
+/* ============================== period ============================== */
+function fyStart(d){const t=dObj(d);const y=t.getUTCMonth()>=3?t.getUTCFullYear():t.getUTCFullYear()-1;return Math.floor(Date.UTC(y,3,1)/864e5)}
+function applyPreset(p){
+  const B=S.base;const end=B?B.dMax:today();let f,t=end;
+  if(/^\d+$/.test(p)){f=end-(+p)+1}
+  else if(p==='month'){const k=ym(end);f=ymStart(k)}
+  else if(p==='lmonth'){const k=ym(end)-1;f=ymStart(k);t=ymStart(k+1)-1}
+  else if(p==='fy'){f=fyStart(end)}
+  else if(p==='lfy'){t=fyStart(end)-1;f=fyStart(t)}
+  else if(p==='all'){f=B?B.dMin:end-365}
+  else return;
+  S.from=f;S.to=t;
+}
+function syncPeriodUI(){
+  $('#pPreset').value=S.preset;$('#pFrom').value=iso(S.from);$('#pTo').value=iso(S.to);
+  $('#asOn').textContent=`Stock as on ${dstr(S.to)} · ${S.to-S.from+1} days in period`;
+}
+
+/* ============================== table component ============================== */
+function tableHTML(id,cols,rows,opt={}){
+  const st=S.tstate[id]||(S.tstate[id]={key:opt.sort||null,dir:opt.dir||-1,all:false});
+  let rs=rows;
+  if(st.key){const c=cols.find(c=>c.k===st.key);if(c){const val=c.sv||(r=>r[c.k]);rs=[...rows].sort((a,b)=>{let x=val(a),y=val(b);
+    if(x==null||x==='–'||(typeof x==='number'&&isNaN(x)))x=st.dir>0?Infinity:-Infinity;if(y==null||y==='–'||(typeof y==='number'&&isNaN(y)))y=st.dir>0?Infinity:-Infinity;
+    if(typeof x==='string'||typeof y==='string')return String(x).localeCompare(String(y))*st.dir;return (x-y)*st.dir})}}
+  const lim=st.all?rs.length:(opt.limit||150);const shown=rs.slice(0,lim);
+  const th=cols.map(c=>`<th class="${c.n?'n':''}" ${st.key===c.k?`aria-sort="${st.dir>0?'ascending':'descending'}"`:''}><button type="button" data-sort="${id}|${c.k}" title="${esc(c.tip||'Sort')}">${esc(c.l)}</button></th>`).join('');
+  const body=shown.length?shown.map(r=>'<tr>'+cols.map(c=>{const v=c.f?c.f(r):esc(r[c.k]);const cl=[c.n?'n':'',c.cls?c.cls(r):'',c.item?'item':''].join(' ').trim();return `<td${cl?` class="${cl}"`:''}>${v}</td>`}).join('')+'</tr>').join('')
+    :`<tr><td colspan="${cols.length}" class="empty">${esc(opt.empty||'Nothing to show for this filter.')}</td></tr>`;
+  const foot=opt.foot?`<tfoot><tr>${opt.foot}</tr></tfoot>`:'';
+  S.exp[id]={cols,rows:rs,title:opt.title||id};
+  return `<div class="tw"><table><thead><tr>${th}</tr></thead><tbody>${body}</tbody>${foot}</table></div>
+    <div class="more">${rs.length>lim?`Showing ${lim} of ${fmtInt(rs.length)} <button class="btn sm" type="button" data-all="${id}">Show all</button>`:`${fmtInt(rs.length)} row${rs.length===1?'':'s'}`}</div>`;
+}
+const itemLink=n=>`<button type="button" class="il" data-item="${esc(n)}">${esc(n)}</button>`;
+const expBtns=id=>`<div class="sp"><button class="btn sm" type="button" data-copy="${id}" title="Copy as a table you can paste into Excel or WhatsApp">Copy</button><button class="btn sm" type="button" data-xlsx="${id}">Excel</button></div>`;
+function exportRows(id){const e=S.exp[id];if(!e)return null;
+  const head=e.cols.map(c=>c.l);const data=e.rows.map(r=>e.cols.map(c=>{const v=c.x?c.x(r):r[c.k];return v==null||(typeof v==='number'&&!isFinite(v))?'':v}));return {head,data,title:e.title}}
+function doCopy(id){const r=exportRows(id);if(!r)return;const txt=[r.head,...r.data].map(a=>a.map(v=>typeof v==='number'?Math.round(v*100)/100:v).join('\t')).join('\n');
+  const ok=()=>toast(`Copied ${r.data.length} rows`);
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,()=>fallbackCopy(txt,ok));else fallbackCopy(txt,ok)}
+function fallbackCopy(txt,ok){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok()}catch(e){toast('Select and copy failed')}ta.remove()}
+function doXlsx(id){const r=exportRows(id);if(!r)return;try{const ws=XLSX.utils.aoa_to_sheet([r.head,...r.data]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,r.title.slice(0,30).replace(/[\\\/?*\[\]:]/g,''));
+  XLSX.writeFile(wb,`${r.title} ${iso(S.to)}.xlsx`);toast('Excel file saved')}catch(e){toast('Saving files is blocked here. Use Copy, or open the dashboard file on your computer.')}}
+
+/* ============================== tab definitions ============================== */
+const TABS=[
+  ['overview','Overview'],['entry','New Entry'],['buy','Buy Now'],['min','Below MOQ'],['neg','Negative'],['top','Top Selling'],['nonmoving','Non-Moving'],
+  ['stock','Stock Summary'],['entries','Entries'],['parties','Customers & Suppliers'],['cats','Categories'],['health','Data Health'],['pi','Proforma Invoice'],['po','Purchase Order'],['mItems','Item Master'],['mCust','Customer Master'],['mVend','Vendor Master'],['settings','Settings']];
+const NAV=[['Dashboard',['overview']],['Transactions',['entry','entries']],['Documents',['pi','po']],['Purchasing',['buy','min']],['Stock',['stock','neg','nonmoving','cats']],['Sales',['top','parties']],['Masters',['mItems','mCust','mVend']],['System',['health','settings']]];
+const ICON={pi:'M7 3h8l4 4v14H7zM15 3v4h4M10 12h6M10 16h6M10 8h2',po:'M5 3h10l4 4v14H5zM15 3v4h4M9 13l2 2 4-4',mItems:'M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8',mCust:'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21v-1a8 8 0 0 1 16 0v1',mVend:'M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6',overview:'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',entry:'M12 5v14M5 12h14',entries:'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',buy:'M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9 20h.01M17 20h.01',
+  min:'M12 4l9 16H3zM12 10v4M12 17h.01',neg:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12h8',stock:'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5',nonmoving:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM10 9v6M14 9v6',
+  cats:'M4 4h7l9 9-7 7-9-9zM8 8h.01',top:'M3 17l6-6 4 4 8-8M15 7h6v6',parties:'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 12 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.6',
+  health:'M3 12h4l3-8 4 16 3-8h4',settings:'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z'};
+const icon=k=>`<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="${ICON[k]||''}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const tabLabel=k=>(TABS.find(t=>t[0]===k)||[k,k])[1];
+const tabGroup=k=>(NAV.find(g=>g[1].includes(k))||[''])[0];
+function renderTabs(){
+  const A=S.A;const cnt=A?{buy:A.items.filter(i=>i.buy).length,min:A.items.filter(i=>i.belowMin).length,neg:A.items.filter(i=>i.neg).length,
+    nonmoving:A.items.filter(i=>i.nonMoving&&i.close>0).length,health:A.health.filter(h=>h.lvl==='serious'||h.lvl==='crit').length}:{};
+  $('#tabs').innerHTML=NAV.map(([g,ks])=>`<div class="side-group">${g}</div>`+ks.map(k=>`<button type="button" data-tab="${k}" ${S.tab===k?'aria-current="page"':''}>${icon(k)}<span>${tabLabel(k)}</span>${cnt[k]?`<span class="ct ${k==='buy'||k==='health'?'hot':''}">${fmtInt(cnt[k])}</span>`:''}</button>`).join('')).join('');
+  $('#pageTitle').textContent=tabLabel(S.tab);$('#pageGroup').textContent=tabGroup(S.tab);
+}
+function setMenu(open){$('#side').classList.toggle('open',open);$('#scrim').hidden=!open;$('#navToggle').setAttribute('aria-expanded',String(open))}
+const cats=()=>[...new Set(S.A.items.map(i=>i.cat))].sort();
+const catSel=(id)=>`<select id="${id}" aria-label="Category"><option value="">All categories</option>${cats().map(c=>`<option ${S.f[id]===c?'selected':''}>${esc(c)}</option>`).join('')}</select>`;
+const srch=(id,ph)=>`<input type="search" id="${id}" placeholder="${esc(ph)}" value="${esc(S.f[id]||'')}" aria-label="${esc(ph)}">`;
+const match=(s,q)=>!q||s.toUpperCase().includes(q.toUpperCase());
+const urgPill=u=>u===3?'<span class="pill crit">Out of stock</span>':u===2?'<span class="pill serious">Urgent</span>':u===1?'<span class="pill warn">Reorder</span>':'';
+const fsnPill=f=>f==='F'?'<span class="pill good">Fast</span>':f==='S'?'<span class="pill flat">Slow</span>':'<span class="pill crit">Non-moving</span>';
+const stockCls=r=>r.close<0?'neg':'';
+const trendTxt=t=>t==null?'<span class="pill info">New</span>':t===0?'–':`<span style="color:${t>0?'var(--good)':'var(--crit)'}">${t>0?'▲':'▼'} ${fmtInt(Math.abs(t*100))}%</span>`;
+// Every visit starts fresh: Overview, last 90 days, no filters. Only Settings and the saved password are remembered.
+S.f={};S.exp={};
+['tab','filters','preset','period'].forEach(k=>{try{localStorage.removeItem('gra.'+k)}catch(e){}});
+
+const VIEWS={
+entry(){return entryView()},
+pi(){return docView('pi')},po(){return docView('po')},mItems(){return masterView('mItems')},mCust(){return masterView('mCust')},mVend(){return masterView('mVend')},
+overview(){
+  const A=S.A,I=A.items;const buy=I.filter(i=>i.buy),urgent=buy.filter(i=>i.urg>=2);
+  const saleV=S.base.vouchers.filter(v=>!v.cancel&&v.t<0);
+  const billsP=saleV.filter(v=>v.d>=A.from&&v.d<=A.to).length,billsPP=saleV.filter(v=>v.d>=A.from-A.plen&&v.d<A.from).length;
+  const delta=billsPP?(billsP-billsPP)/billsPP:null;
+  const nm=I.filter(i=>i.nonMoving&&i.close>0);const active=I.filter(i=>i.billsP>0).length;
+  const top=[...I].filter(i=>i.billsP>0).sort((a,b)=>b.billsP-a.billsP).slice(0,10);const maxB=top.length?top[0].billsP:1;
+  const urg=[...buy].sort((a,b)=>b.urg-a.urg||a.cover-b.cover).slice(0,10);
+  const mx={};for(const a of ['A','B','C'])for(const f of ['F','S','N'])mx[a+f]=0;I.forEach(i=>{if(mx[i.abc+i.fsn]!=null)mx[i.abc+i.fsn]++});
+  const issues=A.health.filter(h=>h.lvl!=='good'&&h.lvl!=='info').slice(0,4);
+  return `
+  <div class="kpis">
+    <button type="button" class="kpi ${buy.length?'crit':''}" data-go="buy"><span class="l">Buy now</span><span class="v">${fmtInt(buy.length)}</span><span class="s">${fmtInt(urgent.length)} urgent or out of stock</span></button>
+    <button type="button" class="kpi ${I.filter(i=>i.belowMin).length?'serious':''}" data-go="min"><span class="l">Below MOQ</span><span class="v">${fmtInt(I.filter(i=>i.belowMin).length)}</span><span class="s">stock under minimum level</span></button>
+    <button type="button" class="kpi ${I.filter(i=>i.neg).length?'crit':''}" data-go="neg"><span class="l">Negative stock</span><span class="v">${fmtInt(I.filter(i=>i.neg).length)}</span><span class="s">of ${fmtInt(I.length)} items</span></button>
+    <button type="button" class="kpi ${nm.length?'warn':''}" data-go="nonmoving"><span class="l">Non-moving</span><span class="v">${fmtInt(nm.length)}</span><span class="s">with stock, no sale in ${SET.nmDays} days</span></button>
+    <button type="button" class="kpi" data-go="top"><span class="l">Sale bills</span><span class="v">${fmtInt(billsP)}</span><span class="s">${delta==null?'in period':`${delta>=0?'▲':'▼'} ${fmtInt(Math.abs(delta*100))}% vs previous ${A.plen} days`}</span></button>
+    <button type="button" class="kpi" data-go="stock"><span class="l">Items sold</span><span class="v">${fmtInt(active)}</span><span class="s">different items in period</span></button>
+  </div>
+  ${issues.length?`<div class="panel"><div class="panel-h"><h3>Needs attention</h3></div><div class="alerts">${issues.map(alertHTML).join('')}</div></div>`:''}
+  <div class="panel"><div class="panel-h"><h3>Monthly entries</h3><p>Number of outward (sales) and inward (purchase) entries made each month. A sudden drop on either side means entries may be missing.</p></div>
+    <div class="legend"><span><i style="background:var(--s-out)"></i>Outward entries</span><span><i style="background:var(--s-in)"></i>Inward entries</span></div>
+    <div class="chartbox"><canvas id="chMonthly" aria-label="Monthly sale bills and receipts"></canvas></div></div>
+  <div class="grid2">
+    <div class="panel"><div class="panel-h"><h3>Buy first</h3><button class="btn sm" type="button" data-go="buy">Full list</button><p>Most urgent items by days of stock left.</p></div>
+      ${tableHTML('ov-buy',[{k:'urg',l:'Status',f:r=>urgPill(r.urg)},{k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:stockCls},{k:'cover',l:'Days left',n:1,f:r=>daysTxt(r.cover)},{k:'suggest',l:'Buy qty',n:1,f:r=>`<b>${fmtInt(r.suggest)}</b>`}],urg,{limit:10,empty:'Nothing needs buying right now.'})}</div>
+    <div class="panel"><div class="panel-h"><h3>Most selling in period</h3><button class="btn sm" type="button" data-go="top">Full list</button><p>Ranked by number of sale bills.</p></div>
+      ${tableHTML('ov-top',[{k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'billsP',l:'Bills',n:1,f:r=>`${fmtInt(r.billsP)}<span class="bar" style="width:${Math.round(r.billsP/maxB*60)}px"></span>`},{k:'outP',l:'Qty sold',n:1,f:r=>fmt(r.outP)},{k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:stockCls}],top,{limit:10,empty:'No sales in this period.'})}</div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><div class="panel-h"><h3>ABC × FSN</h3><p>ABC by ${A.byValue?'sale value':'number of sale bills'} in the last 365 days (A = top 70%). FSN: Fast ${SET.fastBills}+ bills a year, Slow, Non-moving ${SET.nmDays}+ days. Click a cell to list the items.</p></div>
+      <div class="matrix"><div class="h"></div><div class="h">Fast</div><div class="h">Slow</div><div class="h">Non-moving</div>
+      ${['A','B','C'].map(a=>`<div class="h">${a}</div>`+['F','S','N'].map(f=>`<button type="button" data-abc="${a}${f}">${fmtInt(mx[a+f])}</button>`).join('')).join('')}</div></div>
+    <div class="panel"><div class="panel-h"><h3>Categories</h3><button class="btn sm" type="button" data-go="cats">Details</button><p>Sale bills in period by item group.</p></div>
+      <div class="chartbox sm"><canvas id="chCats" aria-label="Sale bills by category"></canvas></div></div>
+  </div>`;
+},
+buy(){
+  const A=S.A,f=S.f;let rows=A.items.filter(i=>i.buy);
+  if(f.bCat)rows=rows.filter(i=>i.cat===f.bCat);if(f.bQ)rows=rows.filter(i=>match(i.name,f.bQ)||match(i.lastSup,f.bQ));if(f.bU)rows=rows.filter(i=>i.urg>=+f.bU);
+  return `<div class="panel"><div class="panel-h"><h2>Buy now</h2><p>Items sold at least ${SET.minBills} times in the last ${SET.basisDays} days whose stock will not last until a new order arrives (lead time ${SET.leadDays} days + ${SET.safetyDays} safety days, or the item's own lead time from the Item Master). Buy qty brings stock up to ${SET.coverDays} days of sale after arrival, and at least the MOQ. Negative stock is counted as zero here, so fix missing entries before ordering large quantities.</p></div>
+  <div class="tool">${srch('bQ','Search item or supplier')}${catSel('bCat')}<select id="bU" aria-label="Urgency"><option value="">All urgency</option><option value="3" ${f.bU==='3'?'selected':''}>Out of stock only</option><option value="2" ${f.bU==='2'?'selected':''}>Urgent and out of stock</option></select>${expBtns('buy')}</div>
+  ${tableHTML('buy',[
+    {k:'urg',l:'Status',f:r=>urgPill(r.urg),x:r=>['','Reorder','Urgent','Out of stock'][r.urg]},
+    {k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'cat',l:'Category'},
+    {k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:stockCls},
+    {k:'monthly',l:'Avg sale / month',n:1,f:r=>fmt(r.monthly)},
+    {k:'cover',l:'Days left',n:1,f:r=>daysTxt(r.cover)},
+    {k:'min',l:'MOQ',n:1,f:r=>fmt(r.min)+(r.minSrc!=='Master'?' <span class="muted">auto</span>':'')},
+    {k:'rop',l:'Reorder at',n:1,f:r=>fmt(r.rop)},
+    {k:'suggest',l:'Buy qty',n:1,f:r=>`<b>${fmtInt(r.suggest)}</b>`},
+    {k:'lastSup',l:'Last supplier'},{k:'lastBuy',l:'Last bought',n:1,f:r=>dstr(r.lastBuy),x:r=>dstr(r.lastBuy)},{k:'lastBuyQty',l:'Last qty',n:1,f:r=>r.lastBuy?fmt(r.lastBuyQty):'–'}
+  ],rows,{sort:'urg',dir:-1,title:'Purchase list',empty:'Nothing needs buying for this filter.'})}</div>`;
+},
+min(){
+  const A=S.A,f=S.f;let rows=A.items.filter(i=>i.belowMin);
+  if(f.mCat)rows=rows.filter(i=>i.cat===f.mCat);if(f.mQ)rows=rows.filter(i=>match(i.name,f.mQ));if(f.mSrc)rows=rows.filter(i=>i.minSrc===f.mSrc);
+  const nMaster=A.items.filter(i=>i.minSrc==='Master').length;
+  return `<div class="panel"><div class="panel-h"><h2>Below MOQ</h2><p>Stock as on ${dstr(S.to)} lower than the minimum stock level. ${nMaster?`${nMaster} items use the MOQ from your Item Master. The rest use an automatic MOQ: ${A.moqLabel}.`:`No MOQ in an Item Master yet, so every MOQ is automatic: ${A.moqLabel}. Fill the MOQ column in the Item Master to set your own.`}</p></div>
+  <div class="tool">${srch('mQ','Search item')}${catSel('mCat')}<select id="mSrc" aria-label="MOQ source"><option value="">All MOQ sources</option><option ${f.mSrc==='Master'?'selected':''}>Master</option><option ${f.mSrc==='Last year'?'selected':''}>Last year</option><option ${f.mSrc==='Recent'?'selected':''}>Recent</option></select>${expBtns('min')}</div>
+  ${tableHTML('min',[
+    {k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'cat',l:'Category'},
+    {k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:stockCls},{k:'min',l:'MOQ',n:1,f:r=>fmt(r.min)},{k:'minSrc',l:'MOQ from'},
+    {k:'short',l:'Short by',n:1,f:r=>`<b>${fmt(r.short)}</b>`},{k:'monthly',l:'Avg sale / month',n:1,f:r=>fmt(r.monthly)},
+    {k:'cover',l:'Days left',n:1,f:r=>daysTxt(r.cover)},{k:'lastSale',l:'Last sold',n:1,f:r=>dstr(r.lastSale),x:r=>dstr(r.lastSale)},{k:'buy',l:'In Buy Now',f:r=>r.buy?'<span class="pill warn">Yes</span>':'<span class="muted">No</span>',x:r=>r.buy?'Yes':'No'}
+  ],rows,{sort:'short',dir:-1,title:'Below MOQ'})}</div>`;
+},
+neg(){
+  const A=S.A,f=S.f;let rows=A.items.filter(i=>i.neg);
+  if(f.nCat)rows=rows.filter(i=>i.cat===f.nCat);if(f.nQ)rows=rows.filter(i=>match(i.name,f.nQ));
+  if(f.nRecent)rows=rows.filter(i=>i.negSince!=null&&i.negSince>=S.from);
+  const hasOpen=S.files.Opening||(S.files.Master&&Object.values(S.files.Master.items).some(m=>m.open!=null||m.phys!=null));
+  return `<div class="panel"><div class="panel-h"><h2>Negative stock</h2><p>More quantity went out than came in. Usually a purchase not entered, a sale entered under the wrong item, or missing opening stock.${hasOpen?'':' <b>Opening stock is not loaded yet, so many of these are only missing their opening balance.</b>'}</p></div>
+  <div class="tool">${srch('nQ','Search item')}${catSel('nCat')}<label><input type="checkbox" id="nRecent" ${f.nRecent?'checked':''}> Went negative within the period</label>${expBtns('neg')}</div>
+  ${tableHTML('neg',[
+    {k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'cat',l:'Category'},
+    {k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:()=>'neg'},
+    {k:'negSince',l:'Negative since',n:1,f:r=>dstr(r.negSince),x:r=>dstr(r.negSince)},
+    {k:'negDays',l:'Days negative',n:1,sv:r=>S.to-r.negSince,f:r=>fmtInt(S.to-r.negSince),x:r=>S.to-r.negSince},
+    {k:'outP',l:'Sold in period',n:1,f:r=>fmt(r.outP)},{k:'inAll',l:'Total in',n:1,f:r=>fmt(r.inAll)},{k:'outAll',l:'Total out',n:1,f:r=>fmt(r.outAll)},
+    {k:'lastBuy',l:'Last bought',n:1,f:r=>dstr(r.lastBuy),x:r=>dstr(r.lastBuy)},{k:'lastSale',l:'Last sold',n:1,f:r=>dstr(r.lastSale),x:r=>dstr(r.lastSale)}
+  ],rows,{sort:'close',dir:1,title:'Negative stock'})}</div>`;
+},
+top(){
+  const A=S.A,f=S.f;const by=f.tBy||'billsP';let rows=A.items.filter(i=>i.billsP>0);
+  if(f.tCat)rows=rows.filter(i=>i.cat===f.tCat);if(f.tQ)rows=rows.filter(i=>match(i.name,f.tQ));
+  const key=by==='cust'?(r=>r.custP.size):(r=>r[by]);
+  rows=[...rows].sort((a,b)=>key(b)-key(a));rows.forEach((r,i)=>r._rank=i+1);const tot=rows.reduce((s,r)=>s+key(r),0)||1;const mx=rows.length?key(rows[0]):1;
+  return `<div class="panel"><div class="panel-h"><h2>Most selling items</h2><p>${dstr(A.from)} to ${dstr(A.to)}. Quantities are in each item's own unit (pieces, kg), so compare quantity within one category; bill count works across all items. Change vs the previous ${A.plen} days.</p></div>
+  <div class="tool">${srch('tQ','Search item')}${catSel('tCat')}<label for="tBy">Rank by</label><select id="tBy"><option value="billsP" ${by==='billsP'?'selected':''}>Number of bills</option><option value="outP" ${by==='outP'?'selected':''}>Quantity sold</option><option value="cust" ${by==='cust'?'selected':''}>Number of customers</option></select>${expBtns('top')}</div>
+  ${tableHTML('top',[
+    {k:'_rank',l:'#',n:1},{k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'cat',l:'Category'},
+    {k:'billsP',l:'Bills',n:1,f:r=>fmtInt(r.billsP)+(by==='billsP'?`<span class="bar" style="width:${Math.round(r.billsP/mx*70)}px"></span>`:'')},
+    {k:'outP',l:'Qty sold',n:1,f:r=>fmt(r.outP)+(by==='outP'?`<span class="bar" style="width:${Math.round(r.outP/mx*70)}px"></span>`:'')},
+    {k:'cust',l:'Customers',n:1,sv:r=>r.custP.size,f:r=>fmtInt(r.custP.size)+(by==='cust'?`<span class="bar" style="width:${Math.round(r.custP.size/mx*70)}px"></span>`:''),x:r=>r.custP.size},
+    {k:'share',l:'Share',n:1,sv:r=>key(r)/tot,f:r=>fmt(key(r)/tot*100)+'%',x:r=>Math.round(key(r)/tot*1000)/10},
+    {k:'chg',l:'vs previous',n:1,sv:r=>r.outPP?(r.outP-r.outPP)/r.outPP:1e9,f:r=>trendTxt(r.outPP?(r.outP-r.outPP)/r.outPP:null),x:r=>r.outPP?Math.round((r.outP-r.outPP)/r.outPP*100)+'%':'new'},
+    {k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:stockCls},{k:'fsn',l:'Movement',f:r=>fsnPill(r.fsn),x:r=>({F:'Fast',S:'Slow',N:'Non-moving'})[r.fsn]}
+  ],rows,{title:'Top selling'})}</div>`;
+},
+nonmoving(){
+  const A=S.A,f=S.f;const days=+(f.nmD||SET.nmDays);const mode=f.nmMode||'nm';
+  let rows=mode==='nm'?A.items.filter(i=>i.idle>days):A.items.filter(i=>i.excess);
+  if(f.nmStock!==false)rows=rows.filter(i=>i.close>0);
+  if(f.nmCat)rows=rows.filter(i=>i.cat===f.nmCat);if(f.nmQ)rows=rows.filter(i=>match(i.name,f.nmQ));
+  return `<div class="panel"><div class="panel-h"><h2>${mode==='nm'?'Non-moving items':'Excess / slow stock'}</h2><p>${mode==='nm'?`No sale in the last ${days} days up to ${dstr(S.to)}. Money is locked in these; consider offers, returns to supplier or stopping purchase.`:`Stock that covers more than ${SET.excessDays} days of current sale, or is above the Max Stock in the Item Master. Stop buying these until stock comes down.`}</p></div>
+  <div class="tool">${srch('nmQ','Search item')}${catSel('nmCat')}
+    <select id="nmMode" aria-label="List"><option value="nm" ${mode==='nm'?'selected':''}>Non-moving</option><option value="ex" ${mode==='ex'?'selected':''}>Excess / slow stock</option></select>
+    ${mode==='nm'?`<select id="nmD" aria-label="No sale for"><option value="90" ${days===90?'selected':''}>No sale 90+ days</option><option value="180" ${days===180?'selected':''}>No sale 180+ days</option><option value="365" ${days===365?'selected':''}>No sale 365+ days</option></select>`:''}
+    <label><input type="checkbox" id="nmStock" ${f.nmStock!==false?'checked':''}> Only items with stock</label>${expBtns('nm')}</div>
+  ${tableHTML('nm',[
+    {k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'cat',l:'Category'},{k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:stockCls},
+    {k:'stockValue',l:'Stock value',n:1,f:r=>r.stockValue==null?'–':fmtInt(r.stockValue)},
+    {k:'lastSale',l:'Last sold',n:1,f:r=>r.lastSale==null?'<span class="muted">Never</span>':dstr(r.lastSale),x:r=>r.lastSale==null?'Never':dstr(r.lastSale)},
+    {k:'idle',l:'Days since sale',n:1,f:r=>r.idle===Infinity?'–':fmtInt(r.idle),x:r=>r.idle===Infinity?'':r.idle},
+    {k:'cover',l:'Days of stock',n:1,f:r=>daysTxt(r.cover)},
+    {k:'lastBuy',l:'Last bought',n:1,f:r=>dstr(r.lastBuy),x:r=>dstr(r.lastBuy)},{k:'lastSup',l:'Last supplier'},{k:'outAll',l:'Sold ever',n:1,f:r=>fmt(r.outAll)}
+  ],rows,{sort:mode==='nm'?'idle':'cover',dir:-1,title:mode==='nm'?'Non-moving':'Excess stock'})}</div>`;
+},
+stock(){
+  const A=S.A,f=S.f;let rows=A.items;
+  if(f.sCat)rows=rows.filter(i=>i.cat===f.sCat);if(f.sQ)rows=rows.filter(i=>match(i.name,f.sQ));
+  if(f.sMov==='moved')rows=rows.filter(i=>i.inP||i.outP);if(f.sFsn)rows=rows.filter(i=>i.fsn===f.sFsn);if(f.sAbc)rows=rows.filter(i=>i.abc===f.sAbc);
+  const T=rows.reduce((t,r)=>{t.i+=r.inP;t.o+=r.outP;return t},{i:0,o:0});
+  return `<div class="panel"><div class="panel-h"><h2>Stock summary</h2><p>Opening as on ${dstr(S.from)}, inward and outward in the period, closing as on ${dstr(S.to)}. Click any item for its full ledger.</p></div>
+  <div class="tool">${srch('sQ','Search item')}${catSel('sCat')}
+    <select id="sMov" aria-label="Movement"><option value="">All items</option><option value="moved" ${f.sMov==='moved'?'selected':''}>Moved in period</option></select>
+    <select id="sFsn" aria-label="FSN"><option value="">Fast / Slow / Non-moving</option>${['F','S','N'].map(x=>`<option value="${x}" ${f.sFsn===x?'selected':''}>${({F:'Fast',S:'Slow',N:'Non-moving'})[x]}</option>`).join('')}</select>
+    <select id="sAbc" aria-label="ABC"><option value="">ABC class</option>${['A','B','C'].map(x=>`<option ${f.sAbc===x?'selected':''}>${x}</option>`).join('')}</select>${expBtns('stock')}</div>
+  ${tableHTML('stock',[
+    {k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'cat',l:'Category'},
+    {k:'openP',l:'Opening',n:1,f:r=>fmt(r.openP),cls:r=>r.openP<0?'neg':''},{k:'inP',l:'Inward',n:1,f:r=>fmt(r.inP)},{k:'outP',l:'Outward',n:1,f:r=>fmt(r.outP)},
+    {k:'adjP',l:'Adjusted',tip:'Journal entries against Bad Debts (+ added, − written off)',n:1,sv:r=>r.adjInP-r.adjOutP,f:r=>r.adjInP||r.adjOutP?fmt(r.adjInP-r.adjOutP):'',x:r=>r.adjInP-r.adjOutP||''},
+    {k:'close',l:'Closing',n:1,f:r=>`<b>${fmt(r.close)}</b>`,cls:stockCls},{k:'min',l:'MOQ',n:1,f:r=>fmt(r.min)},{k:'monthly',l:'Avg sale / month',n:1,f:r=>fmt(r.monthly)},
+    {k:'cover',l:'Days of stock',n:1,f:r=>daysTxt(r.cover)},{k:'lastSale',l:'Last sold',n:1,f:r=>dstr(r.lastSale),x:r=>dstr(r.lastSale)},
+    {k:'lastBuy',l:'Last bought',n:1,f:r=>dstr(r.lastBuy),x:r=>dstr(r.lastBuy)},{k:'abc',l:'ABC'},{k:'fsn',l:'Movement',f:r=>fsnPill(r.fsn),x:r=>({F:'Fast',S:'Slow',N:'Non-moving'})[r.fsn]},
+    {k:'flags',l:'Flags',sv:r=>(r.buy?4:0)+(r.neg?2:0)+(r.belowMin?1:0),f:r=>[r.buy?urgPill(r.urg):'',r.neg?'<span class="pill crit">Negative</span>':'',r.belowMin&&!r.buy?'<span class="pill serious">Below MOQ</span>':'',r.excess?'<span class="pill info">Excess</span>':''].join(' '),x:r=>[r.buy?'Buy':'',r.neg?'Negative':'',r.belowMin?'Below MOQ':'',r.excess?'Excess':''].filter(Boolean).join(', ')}
+  ],rows,{sort:'outP',dir:-1,title:'Stock summary',foot:`<td colspan="3">Total of ${fmtInt(rows.length)} items (mixed units)</td><td class="n">${fmt(T.i)}</td><td class="n">${fmt(T.o)}</td><td colspan="11"></td>`})}</div>`;
+},
+entries(){
+  const A=S.A,f=S.f;let rows=S.base.lines.filter(l=>l.d>=A.from&&l.d<=A.to);
+  if(f.eT==='app')rows=rows.filter(l=>l.app);else if(f.eT==='adj')rows=rows.filter(l=>l.adj);else if(f.eT)rows=rows.filter(l=>l.t===+f.eT&&!l.adj);if(f.eQ)rows=rows.filter(l=>match(l.item,f.eQ));if(f.eP)rows=rows.filter(l=>match(l.party,f.eP)||match(l.v.rawParty||'',f.eP));if(f.eV)rows=rows.filter(l=>match(l.vno,f.eV));
+  const ti=rows.reduce((s,l)=>s+(l.t>0?l.q:0),0),to=rows.reduce((s,l)=>s+(l.t<0?l.q:0),0);const nv=new Set(rows.map(l=>l.v)).size;
+  return `<div class="panel"><div class="panel-h"><h2>All entries</h2><p>Every item line entered between ${dstr(A.from)} and ${dstr(A.to)}. Change the period at the top, or filter by item, party or voucher number.</p></div>
+  <div class="tool">${srch('eQ','Item')}${srch('eP','Party / narration')}${srch('eV','Voucher no.')}
+    <select id="eT" aria-label="Direction"><option value="">Inward and outward</option><option value="1" ${f.eT==='1'?'selected':''}>Inward (Receipt)</option><option value="-1" ${f.eT==='-1'?'selected':''}>Outward (Payment)</option><option value="adj" ${f.eT==='adj'?'selected':''}>Adjustments</option><option value="app" ${f.eT==='app'?'selected':''}>Entered on New Entry page</option></select>${expBtns('entries')}</div>
+  <div class="kpis" style="margin-bottom:10px">
+    <div class="kpi"><span class="l">Vouchers</span><span class="v">${fmtInt(nv)}</span></div><div class="kpi"><span class="l">Item lines</span><span class="v">${fmtInt(rows.length)}</span></div>
+    <div class="kpi"><span class="l">Inward qty</span><span class="v">${fmt(ti)}</span><span class="s">mixed units</span></div><div class="kpi"><span class="l">Outward qty</span><span class="v">${fmt(to)}</span><span class="s">mixed units</span></div></div>
+  ${tableHTML('entries',[
+    {k:'d',l:'Date',n:0,f:r=>dstr(r.d),x:r=>dstr(r.d)},{k:'t',l:'Type',f:r=>r.app?(r.adj?`<span class="pill flat">Adj ${r.t>0?'+':'−'} · App</span>`:r.t>0?'<span class="dir in">In · App</span>':'<span class="dir out">Out · App</span>'):r.adj?`<span class="pill flat">Adj ${r.t>0?'+':'−'} · Journal</span>`:r.t>0?'<span class="dir in">In · Receipt</span>':'<span class="dir out">Out · Payment</span>',x:r=>r.adj?(r.t>0?'Adjustment in':'Adjustment out'):r.t>0?'Inward':'Outward'},
+    {k:'vno',l:'Vch No.',f:r=>`<span class="mono">${esc(r.vno)}</span>${r.app&&r.v&&r.v.id?` <button type="button" class="btn sm" data-editentry="${esc(r.v.id)}">Edit</button>`:''}${r.cond?' <span class="pill serious" title="Condensed export: item break-up missing">condensed</span>':''}`,x:r=>r.vno},
+    {k:'party',l:'Party',f:r=>esc(r.party)},{k:'item',l:'Item',item:1,f:r=>itemLink(r.item)},
+    {k:'qin',l:'In',n:1,sv:r=>r.t>0?r.q:0,f:r=>r.t>0?fmt(r.q):'',x:r=>r.t>0?r.q:''},{k:'qout',l:'Out',n:1,sv:r=>r.t<0?r.q:0,f:r=>r.t<0?fmt(r.q):'',x:r=>r.t<0?r.q:''}
+  ],rows,{sort:'d',dir:-1,limit:300,title:'Entries',foot:`<td colspan="5">Total</td><td class="n">${fmt(ti)}</td><td class="n">${fmt(to)}</td>`})}</div>`;
+},
+parties(){
+  const A=S.A,f=S.f;let c=A.cust.filter(p=>p.bills>0),s=A.sup.filter(p=>p.bills>0);
+  if(f.pQ){c=c.filter(p=>match(p.name,f.pQ));s=s.filter(p=>match(p.name,f.pQ))}
+  const quiet=A.cust.filter(p=>p.billsPrev180>=5&&p.billsLast60===0&&p.name!=='(NO NAME)'&&(!f.pQ||match(p.name,f.pQ)));
+  return `<div class="tool">${srch('pQ','Search party')}</div>
+  <div class="panel"><div class="panel-h"><h2>Customers</h2><p>From Payment narrations, ${dstr(A.from)} to ${dstr(A.to)}. Trailing bill numbers are removed from names so each customer is grouped. Click a name to see its entries.</p>${expBtns('cust')}</div>
+  ${tableHTML('cust',[{k:'name',l:'Customer',f:r=>`<button type="button" class="il" data-party="${esc(r.name)}">${esc(r.name)}</button>`,x:r=>r.name},{k:'bills',l:'Bills',n:1},{k:'lines',l:'Item lines',n:1},{k:'items',l:'Different items',n:1,sv:r=>r.items.size,f:r=>fmtInt(r.items.size),x:r=>r.items.size},
+    {k:'last',l:'Last bill',n:1,f:r=>dstr(r.last),x:r=>dstr(r.last)},{k:'first',l:'First bill',n:1,f:r=>dstr(r.first),x:r=>dstr(r.first)},{k:'billsAll',l:'Bills (all time)',n:1}],c,{sort:'bills',dir:-1,limit:50,title:'Customers'})}</div>
+  <div class="panel"><div class="panel-h"><h2>Customers gone quiet</h2><p>Bought 5 or more times in the 6 months before the last 60 days, but nothing in the last 60 days. Worth a call.</p>${expBtns('quiet')}</div>
+  ${tableHTML('quiet',[{k:'name',l:'Customer',f:r=>`<button type="button" class="il" data-party="${esc(r.name)}">${esc(r.name)}</button>`,x:r=>r.name},{k:'billsPrev180',l:'Bills earlier',n:1},{k:'last',l:'Last bill',n:1,f:r=>dstr(r.last),x:r=>dstr(r.last)},
+    {k:'gap',l:'Days since',n:1,sv:r=>A.to-r.last,f:r=>fmtInt(A.to-r.last),x:r=>A.to-r.last},{k:'billsAll',l:'Bills (all time)',n:1}],quiet,{sort:'billsPrev180',dir:-1,limit:50,title:'Customers gone quiet',empty:'No regular customer has gone quiet.'})}</div>
+  <div class="panel"><div class="panel-h"><h2>Suppliers</h2><p>From Receipt narrations in the period.</p>${expBtns('sup')}</div>
+  ${tableHTML('sup',[{k:'name',l:'Supplier',f:r=>`<button type="button" class="il" data-party="${esc(r.name)}">${esc(r.name)}</button>`,x:r=>r.name},{k:'bills',l:'Receipts',n:1},{k:'lines',l:'Item lines',n:1},{k:'items',l:'Different items',n:1,sv:r=>r.items.size,f:r=>fmtInt(r.items.size),x:r=>r.items.size},
+    {k:'last',l:'Last receipt',n:1,f:r=>dstr(r.last),x:r=>dstr(r.last)},{k:'billsAll',l:'Receipts (all time)',n:1}],s,{sort:'bills',dir:-1,limit:50,title:'Suppliers',empty:'No receipts in this period.'})}</div>`;
+},
+cats(){
+  const A=S.A;const m=new Map();
+  for(const i of A.items){let c=m.get(i.cat);if(!c){c={cat:i.cat,n:0,sold:0,bills:0,inP:0,outP:0,close:0,neg:0,buy:0,min:0,nm:0,value:0};m.set(i.cat,c)}
+    c.n++;if(i.billsP)c.sold++;c.bills+=i.billsP;c.inP+=i.inP;c.outP+=i.outP;c.close+=i.close;if(i.neg)c.neg++;if(i.buy)c.buy++;if(i.belowMin)c.min++;if(i.nonMoving&&i.close>0)c.nm++;if(i.stockValue)c.value+=i.stockValue}
+  const rows=[...m.values()];const mx=Math.max(1,...rows.map(r=>r.bills));
+  return `<div class="panel"><div class="panel-h"><h2>Categories</h2><p>Item groups are worked out from the item name (seeds, fertilizer, fungicide…). Set your own in the Category column of the Item Master. Quantities mix units within a group only when the group does.</p>${expBtns('cats')}</div>
+  ${tableHTML('cats',[{k:'cat',l:'Category',f:r=>`<button type="button" class="il" data-cat="${esc(r.cat)}">${esc(r.cat)}</button>`,x:r=>r.cat},{k:'n',l:'Items',n:1},{k:'sold',l:'Sold in period',n:1},
+    {k:'bills',l:'Sale bills',n:1,f:r=>fmtInt(r.bills)+`<span class="bar" style="width:${Math.round(r.bills/mx*60)}px"></span>`},{k:'inP',l:'Inward',n:1,f:r=>fmt(r.inP)},{k:'outP',l:'Outward',n:1,f:r=>fmt(r.outP)},
+    {k:'close',l:'Closing',n:1,f:r=>fmt(r.close),cls:r=>r.close<0?'neg':''},{k:'buy',l:'Buy now',n:1},{k:'min',l:'Below MOQ',n:1},{k:'neg',l:'Negative',n:1},{k:'nm',l:'Non-moving',n:1}],rows,{sort:'bills',dir:-1,title:'Categories'})}</div>`;
+},
+health(){
+  const A=S.A,app=S.files.App;const ids=app?new Set(app.rows.filter(r=>!/deleted/i.test(r.status||'')).map(r=>r.id)).size:0;
+  const row=(l,v)=>`<tr><td>${l}</td><td class="n">${v}</td></tr>`;
+  return `<div class="panel"><div class="panel-h"><h2>Data health</h2><p>Checks on the data in the Google Sheet.</p></div><div class="alerts">${A.health.map(alertHTML).join('')}</div></div>
+  <div class="panel"><div class="panel-h"><h3>Google Sheet</h3>${app&&app.url?`<a class="muted" href="${esc(app.url)}" target="_blank" rel="noopener" style="font-size:13px">Open the Google Sheet ↗</a>`:''}</div><div class="tw"><table><tbody>
+    ${row('Entries (active)',fmtInt(ids))}${row('Entry lines',fmtInt(app?app.rows.filter(r=>!/deleted/i.test(r.status||'')).length:0))}
+    ${['Items','Customers','Vendors'].map(k=>row(k+' master',S.masters&&S.masters[k]?fmtInt(S.masters[k].rows.length):'–')).join('')}
+    ${row('Loaded',app?esc(new Date(app.loadedAt).toLocaleString('en-IN')):'–')}</tbody></table></div></div>`;
+},
+settings(){
+  const fld=(k,l,h)=>`<label for="set-${k}">${l}<input type="number" min="0" id="set-${k}" data-set="${k}" value="${SET[k]}"><span>${h}</span></label>`;
+  return `<div class="panel"><div class="panel-h"><h2>Rules for Buy Now, MOQ and movement</h2><p>Changes apply straight away and are remembered in this browser. Values in the Item Master (MOQ, lead time, max stock) override these for that item.</p></div>
+  <div class="set">
+    ${fld('leadDays','Supplier lead time (days)','Days from placing an order to receiving the stock.')}
+    ${fld('safetyDays','Safety stock (days)','Extra days of stock kept for delays or sudden demand.')}
+    ${fld('coverDays','Buy for (days)','After the stock arrives, how many days of sale the order should cover.')}
+    ${fld('basisDays','Average sale based on last (days)','Window used for the average daily sale. 90 suits most items.')}
+    <label for="set-moqBasis">Automatic MOQ based on<select id="set-moqBasis" data-set="moqBasis"><option value="ly" ${SET.moqBasis!=='recent'?'selected':''}>Same months last year</option><option value="recent" ${SET.moqBasis==='recent'?'selected':''}>Latest months</option></select><span>Used when the Item Master has no MOQ for an item. MOQ = average monthly sale.</span></label>
+    ${fld('moqMonths','Months to average for MOQ','3 = average of 3 months.')}
+    ${fld('minBills','Minimum sale bills to suggest buying','Items sold fewer times than this in the sales window are not suggested.')}
+    ${fld('nmDays','Non-moving after (days without sale)','Also the "N" in FSN.')}
+    ${fld('fastBills','Fast moving from (sale bills a year)','24 means about two bills a month.')}
+    ${fld('excessDays','Excess stock above (days of stock)','Stock covering more days than this is listed as excess.')}
+  </div>
+  <label for="set-exclude" style="display:grid;gap:4px;margin-top:14px;font-size:13px">Ledgers to leave out (not stock items), separated by |<textarea id="set-exclude" data-set="exclude">${esc(SET.exclude)}</textarea></label>
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn" type="button" id="setReset">Restore defaults</button></div></div>
+  ${typeof companyPanel==='function'?companyPanel():''}
+  <div class="panel"><div class="panel-h"><h2>This device</h2><p>The password is remembered on this device so the dashboard opens straight away.</p></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">${store.get('pw',null)?'<button class="btn" type="button" data-act="forgetPw">Forget saved password</button>':'<span class="muted">No password saved.</span>'}</div></div>`;
+}};
+/* ============================== Masters (Google Sheet tabs) ============================== */
+const MKIND={mItems:{key:'Items',one:'item',name:'Item Name'},mCust:{key:'Customers',one:'customer',name:'Customer Name'},mVend:{key:'Vendors',one:'vendor',name:'Vendor Name'}};
+S.masters=null;S.mDel=null;
+function sheetItemMaster(){
+  const out={},m=S.masters&&S.masters.Items;if(!m)return out;
+  const col=re=>m.headers.find(h=>re.test(h));
+  const c={name:col(/^item/i),cat:col(/categ|group/i),unit:col(/^unit|uom/i),min:col(/^moq$|^min/i),max:col(/^max/i),lead:col(/lead/i),rate:col(/rate|price|cost/i),merge:col(/merge|alias/i),status:col(/^status$/i)};
+  const v=(r,k)=>c[k]?r[c[k]]:'';
+  for(const r of m.rows){const name=cleanName(v(r,'name'));if(!name)continue;
+    out[name]={name,cat:cleanName(v(r,'cat')).toUpperCase()||null,unit:cleanName(v(r,'unit'))||null,min:toNum(v(r,'min')),max:toNum(v(r,'max')),lead:toNum(v(r,'lead')),rate:toNum(v(r,'rate')),
+      merge:cleanName(v(r,'merge'))||null,exclude:/^exclude/i.test(String(v(r,'status')))}}
+  return out;
+}
+function masterNames(tab,activeOnly){const K=MKIND[tab],m=S.masters&&S.masters[K.key];if(!m)return [];
+  return m.rows.filter(r=>!activeOnly||!/^(inactive|exclude)/i.test(String(r.Status||''))).map(r=>cleanName(r[K.name])).filter(Boolean)}
+function masterCandidates(tab){
+  const have=new Set(masterNames(tab).map(n=>n.toUpperCase()));const skip=/^\(NO NAME\)$|^CASH$|^CSH$|^JOURNAL ADJUSTMENT$|^STOCK ADJUSTMENT$/;
+  if(tab==='mItems')return S.A.items.filter(i=>!have.has(i.name.toUpperCase())).sort((a,b)=>a.name.localeCompare(b.name)).map(i=>({'Item Name':i.name,Category:i.cat,Unit:i.unit||'',Status:'Active'}));
+  const src=tab==='mCust'?S.A.cust:S.A.sup;
+  return src.filter(p=>!skip.test(p.name)&&!have.has(p.name.toUpperCase())).sort((a,b)=>b.billsAll-a.billsAll).map(p=>({[MKIND[tab].name]:p.name}));
+}
+function masterView(tab){
+  const K=MKIND[tab];
+  if(S.source!=='hosted')return `<div class="panel"><p class="lede">Masters are kept in the Google Sheet. Open the dashboard with its password to see and edit them.</p></div>`;
+  const m=S.masters&&S.masters[K.key];
+  if(!m)return `<div class="panel"><p class="lede">${S.appState==='loading'?'Loading the masters from the Google Sheet…':S.appState==='unconfigured'?'The Google Sheet connection is not set up yet.':'The masters could not be read from the Google Sheet. Make sure the latest script from the README is deployed as a new version, then refresh.'}</p></div>`;
+  const cols=m.headers.filter(h=>h!=='ID');const q=S.f['mq_'+tab]||'';
+  const rows=q?m.rows.filter(r=>cols.some(h=>match(String(r[h]??''),q))):m.rows;
+  const cand=masterCandidates(tab);
+  const tc=cols.map((h,i)=>i===0?{k:h,l:h,item:1,sv:r=>String(r[h]??''),f:r=>`<button type="button" class="il" data-mact="edit" data-tab="${tab}" data-id="${esc(r.ID)}">${esc(r[h]||'(no name)')}</button>`,x:r=>r[h]}
+    :{k:h,l:h,sv:r=>{const v=r[h];return typeof v==='number'?v:String(v??'')},f:r=>esc(r[h]??''),x:r=>r[h]});
+  return `<div class="kpis">
+    <div class="kpi"><span class="l">${K.key}</span><span class="v">${fmtInt(m.rows.length)}</span><span class="s">records in the sheet</span></div>
+    <div class="kpi"><span class="l">Columns</span><span class="v">${fmtInt(cols.length)}</span><span class="s">add more any time</span></div>
+    <div class="kpi ${cand.length?'warn':''}"><span class="l">Not in master</span><span class="v">${fmtInt(cand.length)}</span><span class="s">${tab==='mItems'?'items':'names'} used in entries</span></div></div>
+  <div class="panel"><div class="panel-h"><p>Saved in the Google Sheet tab "${K.key}". Columns you add here or in the sheet show up automatically.${tab==='mItems'?' MOQ, Max Stock, Lead Time, Rate, Category and Unit are used in Buy Now and the stock reports. Status can be Active, Inactive (hidden from New Entry) or Exclude (not a stock item).':''}</p></div>
+  <div class="tool">${srch('mq_'+tab,'Search '+K.key.toLowerCase())}
+    <button class="btn pri sm" type="button" data-mact="new" data-tab="${tab}">+ Add ${K.one}</button>
+    <button class="btn sm" type="button" data-mact="col" data-tab="${tab}">+ Add column</button>
+    ${cand.length?`<button class="btn sm" type="button" data-mact="fill" data-tab="${tab}">Add ${fmtInt(cand.length)} from entries</button>`:''}
+    ${expBtns('m-'+tab)}</div>
+  ${tableHTML('m-'+tab,tc,rows,{sort:cols[0],dir:1,title:K.key+' master',empty:m.rows.length?'No match for this search.':`No ${K.key.toLowerCase()} yet. Add one, or add the ${tab==='mItems'?'items':'names'} used in entries.`})}</div>`;
+}
+function openDlg(title,html){$('#dlgTitle').textContent=title;$('#dlgBody').innerHTML=html;const d=$('#dlg');if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}}
+function masterForm(tab,id){
+  const K=MKIND[tab],m=S.masters[K.key];const r=id?m.rows.find(x=>String(x.ID)===String(id)):null;S.mDel=null;
+  const cols=m.headers.filter(h=>h!=='ID');const cats=tab==='mItems'?[...new Set(S.A.items.map(i=>i.cat))].sort():[];
+  openDlg(r?`Edit ${K.one}`:`New ${K.one}`,`<form id="masterForm" class="panel" data-tab="${tab}" data-id="${esc(id||'')}" novalidate>
+    <div class="egrid">${cols.map((h,i)=>`<label>${esc(h)}${i===0?' *':''}<input type="text" data-col="${esc(h)}" value="${esc(r?r[h]??'':'')}" ${/categ/i.test(h)&&cats.length?'list="dlCats"':''}${/^status$/i.test(h)?'list="dlStatus"':''} autocomplete="off"></label>`).join('')}</div>
+    <datalist id="dlCats">${cats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist><datalist id="dlStatus"><option value="Active"><option value="Inactive"><option value="Exclude"></datalist>
+    <p class="eerr" id="mErr" hidden></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn pri" type="submit" id="mSave">Save</button>
+      ${r?`<button class="btn" type="button" data-mact="del" data-tab="${tab}" data-id="${esc(id)}">Delete</button>`:''}</div></form>`);
+  const f=$('#masterForm input');if(f)f.focus();
+}
+async function saveMaster(){
+  const f=$('#masterForm');const tab=f.dataset.tab,id=f.dataset.id,K=MKIND[tab];const rec={};
+  f.querySelectorAll('[data-col]').forEach(i=>{rec[i.dataset.col]=i.value.trim()});
+  const first=S.masters[K.key].headers.filter(h=>h!=='ID')[0];const err=m=>{const e=$('#mErr');e.textContent=m;e.hidden=false};
+  if(!rec[first])return err(`Enter the ${first.toLowerCase()}.`);
+  const dup=S.masters[K.key].rows.find(r=>String(r.ID)!==String(id)&&cleanName(r[first]).toUpperCase()===cleanName(rec[first]).toUpperCase());
+  if(dup)return err(`${rec[first]} is already in the master.`);
+  for(const k in rec){const n=toNum(rec[k]);if(n!=null&&/^(moq|max|lead|rate|credit)/i.test(k))rec[k]=n}
+  if(id)rec.ID=id;const b=$('#mSave');b.disabled=true;b.textContent='Saving…';
+  try{await api('POST',{action:'masterSave',master:K.key,record:rec});closeDlg();toast('Saved to the Google Sheet');await loadApp()}
+  catch(e){b.disabled=false;b.textContent='Save';err('Not saved: '+e.message)}
+}
+async function masterClick(t){
+  const tab=t.dataset.tab,K=MKIND[tab];const a=t.dataset.mact;
+  if(a==='new'){masterForm(tab,null);return true}
+  if(a==='edit'){masterForm(tab,t.dataset.id);return true}
+  if(a==='del'){if(S.mDel!==t.dataset.id){S.mDel=t.dataset.id;t.textContent='Tap again to delete';t.style.color='var(--crit)';t.style.borderColor='var(--crit)';return true}
+    try{await api('POST',{action:'masterDelete',master:K.key,id:t.dataset.id});closeDlg();toast('Deleted');await loadApp()}catch(e){toast('Not deleted: '+e.message)}return true}
+  if(a==='col'){openDlg('Add a column',`<form id="colForm" class="panel" data-tab="${tab}"><label style="display:grid;gap:4px;font-size:13px">Column name<input type="text" id="colName" maxlength="60" placeholder="For example: Brand, Area, Payment terms" style="border:1px solid var(--line-2);border-radius:var(--r);padding:7px 9px;background:var(--surface);color:var(--fg)"></label>
+    <p class="eerr" id="cErr" hidden></p><div style="margin-top:12px"><button class="btn pri" type="submit" id="cSave">Add column</button></div></form>`);$('#colName').focus();return true}
+  if(a==='fill'){const recs=masterCandidates(tab);if(!recs.length)return true;
+    if(S.mFill!==tab){S.mFill=tab;t.textContent=`Tap again to add ${fmtInt(recs.length)}`;return true}
+    S.mFill=null;t.disabled=true;t.textContent='Adding…';
+    try{for(let i=0;i<recs.length;i+=2000)await api('POST',{action:'masterBulkAdd',master:K.key,records:recs.slice(i,i+2000)});toast(`Added ${fmtInt(recs.length)} to the ${K.key} master`);await loadApp()}
+    catch(e){toast('Not added: '+e.message);render()}return true}
+  return false;
+}
+async function addColumn(){
+  const f=$('#colForm'),tab=f.dataset.tab,K=MKIND[tab];const name=$('#colName').value.trim();const err=m=>{const e=$('#cErr');e.textContent=m;e.hidden=false};
+  if(!name)return err('Enter a column name.');
+  if(S.masters[K.key].headers.some(h=>h.toLowerCase()===name.toLowerCase()))return err('That column already exists.');
+  const b=$('#cSave');b.disabled=true;b.textContent='Adding…';
+  try{await api('POST',{action:'masterAddColumn',master:K.key,column:name});closeDlg();toast(`Column "${name}" added`);await loadApp()}
+  catch(e){b.disabled=false;b.textContent='Add column';err('Not added: '+e.message)}
+}
+
+/* ============================== New Entry page (Google Sheet) ============================== */
+const ETYPES={IN:{l:'Inward',h:'Stock received: purchase, return from customer'},OUT:{l:'Outward',h:'Stock sent out: sale, return to supplier'},ADJ:{l:'Adjust stock',h:'Correct stock: damage, write-off, counting difference'}};
+const newDraft=()=>({type:'IN',date:iso(today()),party:'',bill:'',note:'',mode:'delta',by:store.get('by',''),lines:[{item:'',qty:''},{item:'',qty:''},{item:'',qty:''}]});
+S.draft=null;S.appState='off';S.appErr='';S.delArm=null;S.saving=false;S.editId=null;
+async function api(method,body){
+  const r=await fetch('/api/entries',{method,headers:{'Content-Type':'application/json','x-dashboard-password':S.pw||''},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+  let j={};try{j=await r.json()}catch(e){}
+  if(r.status===503&&j.error==='not-configured'){const e=new Error('not-configured');e.code=503;throw e}
+  if(!r.ok||!j.ok){const e=new Error(j.error||('The server answered '+r.status));e.status=r.status;throw e}
+  return j;
+}
+async function loadApp(){
+  if(!S.pw)return;S.appState='loading';renderChips();
+  try{const j=await api('GET');S.files.App={rows:j.rows||[],url:j.url||'',loadedAt:Date.now()};S.masters=j.masters||null;S.docs=j.docs===undefined?null:j.docs;S.company=j.company===undefined?null:j.company;S.appState='ready';S.appErr=''}
+  catch(e){S.files.App=null;S.appState=e.code===503?'unconfigured':'error';S.appErr=/unauthori[sz]ed/i.test(e.message)?'the secret in the Google script does not match SHEET_SECRET in Vercel':e.message}
+  if(!S.base)return;
+  buildBase();if(S.preset!=='custom')applyPreset(S.preset);syncPeriodUI();analyse();renderTabs();renderChips();
+  const y=window.scrollY;render();window.scrollTo(0,y);
+}
+function stockOn(name,day){
+  const it=S.A&&S.A.items.find(i=>i.name===name);let b=it?it.K:0;
+  for(const l of (S.base.byItem.get(name)||[])){if(l.d>day)break;if(S.editId&&l.v&&l.v.id===S.editId)continue;b+=l.t*l.q}
+  return {known:!!it||S.base.byItem.has(name),qty:b};
+}
+function entryView(){
+  if(S.source!=='hosted')return `<div class="panel"><h2>New Entry</h2><p class="lede">Entries are saved to the Google Sheet through the live site. Open the dashboard with its password (not with files loaded from this device) to add entries.</p></div>`;
+  if(S.appState==='unconfigured')return `<div class="panel" id="entryPage"><h2>Connect the Google Sheet</h2><p class="lede">The New Entry page is ready, but the Google Sheet connection has not been set up on Vercel yet. Follow the steps in the README (Google Sheet set-up) or ask your administrator.</p></div>`;
+  const D=S.draft||(S.draft=newDraft());const ty=ETYPES[D.type];
+  const items=[...new Set([...S.A.items.map(i=>i.name),...masterNames('mItems',true)])].sort();
+  const parties=[...new Set([...masterNames(D.type==='OUT'?'mCust':'mVend'),...(D.type==='OUT'?S.A.cust:S.A.sup).map(p=>p.name).filter(n=>n!=='(NO NAME)')])].sort();
+  const lineRow=(l,i)=>`<div class="eline" data-i="${i}">
+      <input type="text" class="enItem" list="dlItems" placeholder="Item" aria-label="Item ${i+1}" value="${esc(l.item)}" autocomplete="off">
+      <input type="number" class="enQty" step="any" inputmode="decimal" placeholder="${D.type==='ADJ'?(D.mode==='set'?'Counted':'+ / − qty'):'Qty'}" aria-label="Quantity ${i+1}" value="${esc(l.qty)}">
+      <button type="button" class="btn sm" data-rmline="${i}" aria-label="Remove line ${i+1}">✕</button>
+      <span class="enHint muted">${hintFor(l)}</span></div>`;
+  const app=S.files.App?S.files.App.rows:[];const groups=new Map();for(const r of app){if(!groups.has(r.id))groups.set(r.id,[]);groups.get(r.id).push(r)}
+  const recent=[...groups.values()].map(rs=>({id:rs[0].id,date:rs[0].date,type:rs[0].type,party:rs[0].party,bill:rs[0].bill,by:rs[0].by,status:rs[0].status,created:rs[0].created,
+    items:rs.map(r=>`${r.item} × ${fmt(r.qty)}`),n:rs.length})).sort((a,b)=>String(b.created).localeCompare(String(a.created)));
+  const warnTally=S.base.tallyEnd!=null&&fromIso(D.date)<=S.base.tallyEnd;
+  return `<div class="view" id="entryPage">
+  <form class="panel" id="entryForm" novalidate>
+    <div class="panel-h"><h2>New entry</h2><p>Saved straight to the Google Sheet and counted in every report at once.${S.appState==='loading'?' Loading saved entries…':''}${S.appState==='error'?` <span style="color:var(--crit)">Saved entries could not be loaded: ${esc(S.appErr)}</span>`:''}</p></div>
+    ${S.editId?`<p class="enote"><b>Editing an entry.</b> Saving replaces it. The old version stays in the Google Sheet marked Deleted. <button type="button" class="btn sm" data-canceledit="1">Cancel edit</button></p>`:''}
+    <div class="seg" role="radiogroup" aria-label="Entry type">${Object.entries(ETYPES).map(([k,v])=>`<button type="button" role="radio" aria-checked="${D.type===k}" data-etype="${k}" class="${D.type===k?'on':''}"><b>${v.l}</b><span>${v.h}</span></button>`).join('')}</div>
+    <div class="egrid">
+      <label>Date<input type="date" id="enDate" value="${D.date}" max="${iso(today())}" required></label>
+      ${D.type==='ADJ'?`<label>How to adjust<select id="enMode"><option value="delta" ${D.mode!=='set'?'selected':''}>Add or remove a quantity</option><option value="set" ${D.mode==='set'?'selected':''}>Set stock to a counted figure</option></select></label>`
+        :`<label>${D.type==='IN'?'Supplier':'Customer'}<input type="text" id="enParty" list="dlParty" value="${esc(D.party)}" autocomplete="off" placeholder="Name"></label>
+      <label>Bill / challan no.<input type="text" id="enBill" value="${esc(D.bill)}" autocomplete="off" placeholder="Optional"></label>`}
+      <label>Entered by<input type="text" id="enBy" value="${esc(D.by)}" autocomplete="name" placeholder="Your name"></label>
+    </div>
+    ${warnTally?`<p class="enote">This date is inside the Tally data (up to ${dstr(S.base.tallyEnd)}). Save it only if this entry is not already in Tally, otherwise it will be counted twice.</p>`:''}
+    ${D.type==='ADJ'?`<p class="muted" style="margin:0;font-size:13px">${D.mode==='set'?'Enter the stock you counted. The difference from the stock on that date is saved as the adjustment.':'Enter a positive number to add stock and a negative number (for example −5) to remove it.'}</p>`:''}
+    <div class="elines" id="enLines">${D.lines.map(lineRow).join('')}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-addline="1">+ Add item</button></div>
+    <label class="full">Narration<textarea id="enNote" placeholder="Optional note">${esc(D.note)}</textarea></label>
+    <p id="enErr" class="eerr" ${S.entryErr?'':'hidden'}>${esc(S.entryErr||'')}</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="submit" class="btn pri" id="enSave" ${S.saving?'disabled':''}>${S.saving?'Saving…':S.editId?'Save changes':`Save ${ty.l.toLowerCase()} entry`}</button><button type="button" class="btn" data-clearentry="1">Clear</button>
+      ${S.files.App&&S.files.App.url?`<a class="muted" href="${esc(S.files.App.url)}" target="_blank" rel="noopener" style="font-size:13px">Open the Google Sheet ↗</a>`:''}</div>
+  </form>
+  <datalist id="dlItems">${items.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+  <datalist id="dlParty">${parties.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+  <div class="panel"><div class="panel-h"><h3>Entries made here</h3><p>Newest first. Deleting marks the rows as Deleted in the Google Sheet, so the history stays.</p></div>
+  ${tableHTML('appents',[
+    {k:'date',l:'Date',sv:r=>sheetDay(r.date),f:r=>dstr(sheetDay(r.date)),x:r=>dstr(sheetDay(r.date))},
+    {k:'type',l:'Type',f:r=>/^in/i.test(r.type)?'<span class="dir in">Inward</span>':/^out/i.test(r.type)?'<span class="dir out">Outward</span>':'<span class="pill flat">Adjustment</span>',x:r=>r.type},
+    {k:'party',l:'Party'},{k:'bill',l:'Bill no.'},{k:'n',l:'Items',n:1},
+    {k:'items',l:'Details',sv:r=>r.items.join(),f:r=>`<span style="white-space:normal">${esc(r.items.slice(0,3).join(', '))}${r.n>3?` +${r.n-3} more`:''}</span>`,x:r=>r.items.join('; ')},
+    {k:'by',l:'Entered by'},{k:'created',l:'Saved',f:r=>r.created?esc(new Date(r.created).toLocaleString('en-IN',{dateStyle:'short',timeStyle:'short'})):'',x:r=>r.created},
+    {k:'status',l:'',sv:r=>r.status,f:r=>/deleted/i.test(r.status)?'<span class="pill flat">Deleted</span>':`<button type="button" class="btn sm" data-editentry="${esc(r.id)}">Edit</button> `+(S.delArm===r.id?`<button type="button" class="btn sm" data-del="${esc(r.id)}" style="border-color:var(--crit);color:var(--crit)">Tap again to delete</button>`:`<button type="button" class="btn sm" data-del="${esc(r.id)}">Delete</button>`),x:r=>r.status}
+  ],recent,{limit:50,title:'App entries',empty:S.appState==='loading'?'Loading…':'No entries yet.'})}</div></div>`;
+}
+function hintFor(l){
+  const n=cleanName(l.item);if(!n||!S.base)return '';
+  const D=S.draft;const day=fromIso(D.date);if(isNaN(day))return '';
+  const s=stockOn(n,day);if(!s.known)return '<span style="color:var(--warn)">New item: it will be added to the list</span>';
+  let t=`Stock on ${dstr(day)}: <b>${fmt(s.qty)}</b>`;
+  const q=parseFloat(l.qty);
+  if(D.type==='ADJ'&&isFinite(q))t+=D.mode==='set'?` → change ${q-s.qty>=0?'+':''}${fmt(q-s.qty)}`:` → ${fmt(s.qty+q)}`;
+  else if(D.type==='OUT'&&isFinite(q)&&q>s.qty)t+=` <span style="color:var(--crit)">· more than in stock</span>`;
+  return t;
+}
+function readForm(){
+  const D=S.draft;const g=id=>{const e=document.getElementById(id);return e?e.value:null};
+  if(g('enDate')!=null)D.date=g('enDate');if(g('enParty')!=null)D.party=g('enParty');if(g('enBill')!=null)D.bill=g('enBill');
+  if(g('enBy')!=null)D.by=g('enBy');if(g('enNote')!=null)D.note=g('enNote');if(g('enMode')!=null)D.mode=g('enMode');
+  D.lines=[...document.querySelectorAll('#enLines .eline')].map(r=>({item:r.querySelector('.enItem').value,qty:r.querySelector('.enQty').value}));
+}
+function refreshHints(){document.querySelectorAll('#enLines .eline').forEach((r,i)=>{const h=r.querySelector('.enHint');if(h&&S.draft.lines[i])h.innerHTML=hintFor(S.draft.lines[i])})}
+function entryChanged(el){readForm();if(el.id==='enMode'||el.id==='enDate'){S.entryErr='';rerenderEntry();return}refreshHints()}
+document.addEventListener('input',e=>{const el=e.target;if(el.closest&&el.closest('#entryForm')){readForm();if(el.classList.contains('enQty')||el.classList.contains('enItem'))refreshHints()}},true);
+function rerenderEntry(){const y=window.scrollY;render();window.scrollTo(0,y)}
+function entryClick(t){
+  if(t.dataset.etype){readForm();if(S.draft.type!==t.dataset.etype){S.draft.type=t.dataset.etype;S.draft.party='';S.entryErr=''}rerenderEntry();return true}
+  if(t.dataset.addline){readForm();S.draft.lines.push({item:'',qty:''});rerenderEntry();const ins=document.querySelectorAll('#enLines .enItem');if(ins.length)ins[ins.length-1].focus();return true}
+  if(t.dataset.rmline!=null){readForm();S.draft.lines.splice(+t.dataset.rmline,1);if(!S.draft.lines.length)S.draft.lines.push({item:'',qty:''});rerenderEntry();return true}
+  if(t.dataset.clearentry||t.dataset.canceledit){const ty=S.editId?'IN':S.draft.type;S.editId=null;S.draft=newDraft();S.draft.type=ty;S.entryErr='';rerenderEntry();return true}
+  if(t.dataset.del){const id=t.dataset.del;if(S.delArm!==id){S.delArm=id;rerenderEntry();return true}deleteEntry(id);return true}
+  return false;
+}
+async function saveEntry(){
+  if(S.saving)return;readForm();const D=S.draft;const day=fromIso(D.date);
+  const fail=m=>{S.entryErr=m;rerenderEntry();const e=$('#enErr');if(e)e.scrollIntoView({block:'center'})};
+  if(isNaN(day))return fail('Enter the date of the entry.');
+  if(day>today())return fail('The date cannot be in the future.');
+  const filled=D.lines.filter(l=>cleanName(l.item)||String(l.qty).trim()!=='');
+  if(!filled.length)return fail('Add at least one item with its quantity.');
+  const lines=[];
+  for(const l of filled){const item=cleanName(l.item);const q=parseFloat(l.qty);
+    if(!item)return fail('One line has a quantity but no item.');
+    if(!isFinite(q))return fail(`Enter a quantity for ${item}.`);
+    if(D.type!=='ADJ'){if(q<=0)return fail(`Quantity for ${item} must be more than zero.`);lines.push({item,qty:q})}
+    else if(D.mode==='set'){if(q<0)return fail(`Counted stock for ${item} cannot be negative.`);const diff=Math.round((q-stockOn(item,day).qty)*1000)/1000;if(diff!==0)lines.push({item,qty:diff,counted:q})}
+    else{if(q===0)return fail(`Enter a non-zero adjustment for ${item}.`);lines.push({item,qty:q})}}
+  if(!lines.length)return fail('The counted stock already matches for every item, so there is nothing to save.');
+  if(!cleanName(D.by))return fail('Enter your name in "Entered by".');
+  store.set('by',cleanName(D.by));
+  S.saving=true;S.entryErr='';rerenderEntry();
+  try{
+    const j=await api('POST',{action:'add',entry:{date:D.date,type:D.type,party:D.type==='ADJ'?'':D.party,bill:D.type==='ADJ'?'':D.bill,narration:D.note,by:D.by,lines}});
+    if(S.editId){const old=S.editId;S.editId=null;
+      try{await api('POST',{action:'delete',id:old});toast('Entry updated')}
+      catch(e){toast('Saved the new version, but the old one could not be removed. Delete it from the list.')}}
+    else toast(`Saved ${j.lines} line${j.lines>1?'s':''} to the Google Sheet`);
+    const keep={type:D.type,date:D.date,by:D.by,mode:D.mode};S.draft=Object.assign(newDraft(),keep);
+    S.saving=false;await loadApp();
+  }catch(e){S.saving=false;fail(e.code===503?'The Google Sheet connection is not set up yet.':'Not saved: '+e.message)}
+}
+function startEdit(id){
+  const rows=((S.files.App&&S.files.App.rows)||[]).filter(r=>r.id===id&&!/deleted/i.test(r.status||''));if(!rows.length){toast('That entry was not found. Refresh and try again.');return}
+  const r0=rows[0],ty=/^in/i.test(r0.type)?'IN':/^out/i.test(r0.type)?'OUT':'ADJ',set=ty==='ADJ'&&rows.some(r=>r.counted!=null);
+  const d=sheetDay(r0.date);
+  S.draft={type:ty,date:d!=null?iso(d):iso(today()),party:r0.party||'',bill:r0.bill||'',note:r0.narration||'',mode:set?'set':'delta',by:store.get('by','')||r0.by||'',
+    lines:rows.map(r=>({item:r.item,qty:String(set&&r.counted!=null?r.counted:r.qty)}))};
+  S.editId=id;S.delArm=null;S.entryErr='';closeDlg();S.tab='entry';render();window.scrollTo({top:0});
+}
+async function deleteEntry(id){
+  try{await api('POST',{action:'delete',id});S.delArm=null;if(S.editId===id){S.editId=null;S.draft=null}toast('Entry deleted');await loadApp()}
+  catch(e){S.delArm=null;toast('Not deleted: '+e.message);rerenderEntry()}
+}
+function alertHTML(h){const lbl={crit:'Critical',serious:'Important',warn:'Check',info:'Note',good:'Good'}[h.lvl];
+  return `<div class="alert"><span class="pill ${h.lvl}">${lbl}</span><div><div class="t">${esc(h.t)}</div><p>${esc(h.p)}</p>${h.act?`<div class="act">${h.act.map(([l,a])=>`<button class="btn sm" type="button" data-act="${a}">${esc(l)}</button>`).join('')}</div>`:''}</div></div>`}
+
+/* ============================== rendering ============================== */
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function chartDefaults(){if(!window.Chart)return;Chart.defaults.font.family=css('--f-body')||'system-ui';Chart.defaults.font.size=12;Chart.defaults.color=css('--fg-2');Chart.defaults.borderColor=css('--line')}
+function killCharts(){for(const k in S.charts){try{S.charts[k].destroy()}catch(e){}}S.charts={}}
+function render(){
+  killCharts();renderTabs();
+  const main=$('#main');
+  if(S.locked){main.innerHTML=unlockPanel();const pw=$('#unlockPw');if(pw)pw.focus();return}
+  if(!S.A){main.innerHTML=loadPanel(true);bindDrop();return}
+  S.exp={};
+  const sheetErr=S.source==='hosted'&&(S.appState==='error'||S.appState==='unconfigured')?`<div class="alert" style="border-color:var(--crit)"><span class="pill crit">Google Sheet</span><div><div class="t">${S.appState==='unconfigured'?'The Google Sheet is not connected':'Entries and masters from the Google Sheet could not be loaded'}</div><p>${S.appState==='unconfigured'?'Set SHEET_WEBAPP_URL and SHEET_SECRET in Vercel, then redeploy.':`Reason: ${esc(S.appErr||'unknown')}. Stock shown here does not include entries made on this site until this is fixed.`}</p><div class="act"><button class="btn sm" type="button" data-act="retryApp">Try again</button></div></div></div>`:'';
+  main.innerHTML=`<div class="view">${sheetErr}${(VIEWS[S.tab]||VIEWS.overview)()}</div>`;
+  const h2=main.querySelector('.panel-h h2');if(h2&&h2.textContent.trim().toLowerCase()===tabLabel(S.tab).toLowerCase())h2.hidden=true;
+  if(S.tab==='overview')drawOverviewCharts();
+}
+function unlockPanel(){
+  return `<div class="drop" style="max-width:520px;margin:24px auto">
+    <h2>Enter the password</h2>
+    <p class="lede">Green Raise Agro Stock Control is locked. Stock, entries and masters are read from the Google Sheet once the password is entered.</p>
+    <form id="unlockForm" style="display:grid;gap:10px;width:100%;max-width:320px">
+      <input type="password" id="unlockPw" autocomplete="current-password" placeholder="Password" aria-label="Password" style="border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r);padding:8px 10px">
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--fg-2)"><input type="checkbox" id="unlockRem" checked> Remember on this device</label>
+      <button class="btn pri" type="submit" id="unlockBtn">Open dashboard</button>
+      ${S.unlockErr?`<p style="margin:0;color:var(--crit);font-size:13px">${esc(S.unlockErr)}</p>`:''}
+    </form></div>`;
+}
+/* ---- data uploaded to GitHub, published encrypted by the Vercel build ---- */
+async function fetchHosted(){try{const r=await fetch('data.enc.json',{cache:'no-cache'});if(!r.ok)return null;const j=await r.json();return j&&j.ct?j:null}catch(e){return null}}
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function decryptHosted(h,pw){
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(h.salt),iterations:h.iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(h.iv)},key,b64(h.ct));
+  const txt=h.gzip?await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text():new TextDecoder().decode(plain);
+  return JSON.parse(txt);
+}
+async function tryUnlock(pw,remember,silent){
+  const btn=$('#unlockBtn');if(btn){btn.disabled=true;btn.textContent='Opening…'}
+  try{
+    if(S.hosted){const d=await decryptHosted(S.hosted,pw);
+      S.files.Payment=unpack(d.Payment);S.files.Receipt=unpack(d.Receipt);S.files.Master=d.Master||null;S.files.Opening=d.Opening||null;S.files.Journal=unpack(d.Journal)||null;S.srcAt=d.builtAt}
+    S.pw=pw;
+    // the Google Sheet is the source of entries and masters; the server checks the password
+    S.appState='loading';const j=await api('GET');
+    S.files.App={rows:j.rows||[],url:j.url||'',loadedAt:Date.now()};S.masters=j.masters||null;S.docs=j.docs===undefined?null:j.docs;S.company=j.company===undefined?null:j.company;S.appState='ready';S.appErr='';
+    S.source='hosted';S.locked=false;S.unlockErr='';
+    if(remember)store.set('pw',pw);
+    boot(false);return true;
+  }catch(e){
+    const wrong=e.status===401||e.name==='OperationError';
+    if(wrong){S.pw=null;if(silent)store.set('pw',null)}
+    S.appState='off';S.locked=true;
+    S.unlockErr=wrong?(silent?'The saved password no longer works. Enter the current one.':'That password is not right. Check it and try again.'):'Could not reach the Google Sheet: '+e.message+' Try again in a moment.';
+    renderChips();render();return false;
+  }
+}
+function loadPanel(){
+  return `<div class="drop"><h2>No data yet</h2><p class="lede">Entries and masters come from the Google Sheet. Refresh the page to try again.</p></div>`;
+}
+function drawOverviewCharts(){
+  if(!window.Chart)return;chartDefaults();const A=S.A;
+  const ms=A.months.filter(m=>m.k<=ym(A.to)).slice(-24);
+  const grid={color:css('--line')},tick={color:css('--fg-3')};
+  const c1=$('#chMonthly');if(c1)S.charts.m=new Chart(c1,{type:'bar',data:{labels:ms.map(m=>ymLabel(m.k)),datasets:[
+      {label:'Sale bills',data:ms.map(m=>m.sale),backgroundColor:css('--s-out'),borderRadius:{topLeft:4,topRight:4},maxBarThickness:18,borderSkipped:'bottom'},
+      {label:'Receipts',data:ms.map(m=>m.rec),backgroundColor:css('--s-in'),borderRadius:{topLeft:4,topRight:4},maxBarThickness:18,borderSkipped:'bottom'}]},
+    options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{footer:it=>{const m=ms[it[0].dataIndex];return m.cond?`${m.cond} condensed bills`:''}}}},
+      scales:{x:{grid:{display:false},ticks:tick},y:{beginAtZero:true,grid,ticks:tick,border:{display:false}}}}});
+  const cm=new Map();A.items.forEach(i=>cm.set(i.cat,(cm.get(i.cat)||0)+i.billsP));
+  let cs=[...cm.entries()].filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);if(cs.length>9){const rest=cs.slice(8).reduce((s,x)=>s+x[1],0);cs=cs.slice(0,8).concat([['Other groups',rest]])}
+  const c2=$('#chCats');if(c2)S.charts.c=new Chart(c2,{type:'bar',data:{labels:cs.map(x=>x[0]),datasets:[{label:'Sale bills',data:cs.map(x=>x[1]),backgroundColor:css('--s-out'),borderRadius:{topRight:4,bottomRight:4},borderSkipped:'left',maxBarThickness:16}]},
+    options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid,ticks:tick,border:{display:false}},y:{grid:{display:false},ticks:{color:css('--fg-2')}}}}});
+}
+
+/* ============================== item drill-down ============================== */
+function openItem(name){
+  const A=S.A,it=A.items.find(i=>i.name===name);if(!it)return;
+  if(name!==S.curItem){delete S.tstate['it-l'];delete S.tstate['it-c'];delete S.tstate['it-s']}
+  const L=S.base.lines.filter(l=>l.item===name&&l.d<=A.to);
+  let bal=it.K;const led=L.map(l=>{bal+=l.t*l.q;return {...l,bal}});
+  const endK=ym(A.to),startK=endK-23;const mon=[];for(let k=startK;k<=endK;k++)mon.push({k,i:0,o:0,b:null});
+  let b=it.K;let li=0;for(const m of mon){const end=ymStart(m.k+1)-1;while(li<L.length&&L[li].d<=end){const l=L[li++];b+=l.t*l.q;if(l.d>=ymStart(m.k)&&!l.adj){if(l.t>0)m.i+=l.q;else m.o+=l.q}}m.b=b}
+  const cust=new Map(),sup=new Map();for(const l of L){if(l.d<A.from||l.adj)continue;const mm=l.t<0?cust:sup;const p=mm.get(l.party)||{name:l.party,n:0,q:0};p.n++;p.q+=l.q;mm.set(l.party,p)}
+  $('#dlgTitle').textContent=name;
+  const kp=(l,v,s,c='')=>`<div class="kpi ${c}"><span class="l">${l}</span><span class="v">${v}</span>${s?`<span class="s">${s}</span>`:''}</div>`;
+  const m=it.m||{};
+  $('#dlgBody').innerHTML=`
+   <div class="kpis">${kp('Stock '+dstr(A.to),fmt(it.close),it.unit||it.cat,it.neg?'crit':'')}${kp('Avg sale / month',fmt(it.monthly),`last ${SET.basisDays} days`)}${kp('Days of stock',daysTxt(it.cover),`lead time ${it.lead} days`)}
+     ${kp('MOQ',fmt(it.min),it.minSrc==='Master'?'from Item Master':it.minSrc==='Last year'?'avg of same months last year':'avg of latest months')}${kp('Buy qty',it.buy?fmtInt(it.suggest):'–',it.buy?['','Reorder','Urgent','Out of stock'][it.urg]:'no need now',it.buy?'serious':'')}
+     ${kp('Movement',({F:'Fast',S:'Slow',N:'Non-moving'})[it.fsn],`ABC class ${it.abc}`)}</div>
+   <div class="grid2">
+    <div class="panel"><div class="panel-h"><h3>Monthly in and out</h3></div><div class="legend"><span><i style="background:var(--s-in)"></i>Inward</span><span><i style="background:var(--s-out)"></i>Outward</span></div><div class="chartbox sm"><canvas id="chItem"></canvas></div></div>
+    <div class="panel"><div class="panel-h"><h3>Stock at month end</h3><p>${m.fromTB?`Starts from the Trial Balance balance ${fmt(m.phys)} as on ${dstr(m.cdate)}.`:m.phys!=null?`Anchored to physical stock ${fmt(m.phys)} on ${dstr(m.cdate)}.`:m.open!=null?`Starts from opening stock ${fmt(m.open)}.`:'No opening stock given, so it starts from zero.'}</p></div><div class="chartbox sm"><canvas id="chBal"></canvas></div></div>
+   </div>
+   <div class="grid2">
+    <div class="panel"><div class="panel-h"><h3>Customers in period</h3></div>${tableHTML('it-c',[{k:'name',l:'Customer'},{k:'n',l:'Bills',n:1},{k:'q',l:'Qty',n:1,f:r=>fmt(r.q)}],[...cust.values()],{sort:'q',dir:-1,limit:10,empty:'No sales in this period.'})}</div>
+    <div class="panel"><div class="panel-h"><h3>Suppliers in period</h3></div>${tableHTML('it-s',[{k:'name',l:'Supplier'},{k:'n',l:'Receipts',n:1},{k:'q',l:'Qty',n:1,f:r=>fmt(r.q)}],[...sup.values()],{sort:'q',dir:-1,limit:10,empty:'No receipts in this period.'})}</div>
+   </div>
+   <div class="panel"><div class="panel-h"><h3>Ledger</h3><p>Every entry up to ${dstr(A.to)}, newest first, with running stock.</p>${expBtns('it-l')}</div>
+   ${tableHTML('it-l',[{k:'d',l:'Date',f:r=>dstr(r.d),x:r=>dstr(r.d)},{k:'vno',l:'Vch No.',f:r=>`<span class="mono">${esc(r.vno)}</span>`,x:r=>r.vno},{k:'party',l:'Party'},
+     {k:'qin',l:'In',n:1,sv:r=>r.t>0?r.q:0,f:r=>r.t>0?fmt(r.q):'',x:r=>r.t>0?r.q:''},{k:'qout',l:'Out',n:1,sv:r=>r.t<0?r.q:0,f:r=>r.t<0?fmt(r.q):'',x:r=>r.t<0?r.q:''},{k:'bal',l:'Stock',n:1,f:r=>fmt(r.bal),cls:r=>r.bal<0?'neg':''}],
+     led.reverse(),{sort:null,limit:100,title:name.slice(0,25)})}</div>`;
+  const d=$('#dlg');if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}
+  S.curItem=name;
+  if(window.Chart){chartDefaults();const grid={color:css('--line')},tick={color:css('--fg-3')};
+    if(S.charts.i)S.charts.i.destroy();if(S.charts.b)S.charts.b.destroy();
+    S.charts.i=new Chart($('#chItem'),{type:'bar',data:{labels:mon.map(m=>ymLabel(m.k)),datasets:[{label:'Inward',data:mon.map(m=>m.i),backgroundColor:css('--s-in'),borderRadius:{topLeft:3,topRight:3},borderSkipped:'bottom',maxBarThickness:12},{label:'Outward',data:mon.map(m=>m.o),backgroundColor:css('--s-out'),borderRadius:{topLeft:3,topRight:3},borderSkipped:'bottom',maxBarThickness:12}]},
+      options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:tick},y:{beginAtZero:true,grid,ticks:tick,border:{display:false}}}}});
+    S.charts.b=new Chart($('#chBal'),{type:'line',data:{labels:mon.map(m=>ymLabel(m.k)),datasets:[{label:'Stock',data:mon.map(m=>m.b),borderColor:css('--s-bal'),borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:0,fill:{target:{value:0},above:'rgba(98,80,214,.10)',below:'rgba(208,59,59,.14)'}}]},
+      options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:tick},y:{grid,ticks:tick,border:{display:false}}}}});
+  }
+}
+
+/* ============================== Item Master export ============================== */
+function masterRows(){
+  const A=S.A;const M=S.files.Master?S.files.Master.items:{};
+  const names=new Set([...A.items.map(i=>i.name),...Object.keys(M)]);
+  const head=['Item','Category','Unit','Opening Stock','Physical Stock','Count Date','MOQ','Max Stock','Lead Time (days)','Rate','Exclude','Merge Into','— Current stock (info)','— Avg sale / month (info)','— Auto MOQ (info)','— Last sold (info)'];
+  const rows=[...names].sort().map(n=>{const it=A.items.find(i=>i.name===n)||{};const m=M[n]||{};
+    return [n,m.cat||it.cat||'',m.unit||'',m.open??'',m.phys??'',m.cdate!=null?dstr(m.cdate):'',m.min??'',m.max??'',m.lead??'',m.rate??'',m.exclude?'Y':'',m.merge||'',
+      it.close!=null?Math.round(it.close*100)/100:'',it.monthly!=null?Math.round(it.monthly*100)/100:'',it.minSrc&&it.minSrc!=='Master'?it.min:'',it.lastSale!=null?dstr(it.lastSale):''];});
+  return {head,rows};
+}
+function downloadMaster(){const {head,rows}=masterRows();
+  try{const ws=XLSX.utils.aoa_to_sheet([head,...rows]);ws['!cols']=head.map((h,i)=>({wch:i===0?38:Math.max(10,h.length+2)}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Item Master');
+    XLSX.writeFile(wb,'Item Master.xlsx');toast('Item Master.xlsx saved')}catch(e){toast('Saving files is blocked here. Use "Copy Item Master" and paste into Excel.')}}
+function copyMaster(){const {head,rows}=masterRows();const txt=[head,...rows].map(r=>r.join('\t')).join('\n');const ok=()=>toast(`Copied ${rows.length} items. Paste into a blank Excel sheet.`);
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,()=>fallbackCopy(txt,ok));else fallbackCopy(txt,ok)}
+
+/* ============================== loading ============================== */
+async function handleFiles(list){
+  const msg=$('#loadMsg');const done=[],errs=[];
+  if(!window.XLSX){toast('The Excel reader did not load. Check the internet connection, or keep the lib folder next to this file.');return}
+  for(const file of list){
+    try{const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:'array',cellDates:false});const f=parseWorkbook(wb,file.name);S.files[f.kind]=f;done.push(`${f.kind}: ${file.name}`)}
+    catch(e){errs.push(e.message||String(e))}
+  }
+  if(errs.length){if(msg)msg.textContent=errs.join(' ');toast(errs[0])}
+  if(!done.length)return;
+  S.source='local';S.srcAt=Date.now();S.locked=false;
+  await idb.set('files',{Payment:pack(S.files.Payment),Receipt:pack(S.files.Receipt),Journal:pack(S.files.Journal),Master:S.files.Master,Opening:S.files.Opening});
+  boot(true);toast('Loaded '+done.join(', '));
+}
+function bindDrop(){const d=$('#drop');if(!d)return;
+  ['dragenter','dragover'].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.add('over')}));
+  ['dragleave','drop'].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.remove('over')}));
+  d.addEventListener('drop',ev=>{if(ev.dataTransfer&&ev.dataTransfer.files.length)handleFiles([...ev.dataTransfer.files])});
+}
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer&&e.dataTransfer.files.length&&!e.target.closest('#drop'))handleFiles([...e.dataTransfer.files])});
+function sheetChip(){
+  const st=S.appState;if(S.locked&&st!=='ready')return '<span class="chip miss"><b>Google Sheet</b>locked</span>';const n=S.files.App?new Set(S.files.App.rows.filter(r=>!/deleted/i.test(r.status||'')).map(r=>r.id)).size:0;
+  const txt=st==='ready'?`${fmtInt(n)} entries`:st==='loading'?'loading…':st==='unconfigured'?'not connected':st==='error'?'<span style="color:var(--crit)">could not load</span>':'not loaded';
+  return `<span class="chip ${st==='ready'?'ok':'miss'}" title="${esc(S.appErr||'')}"><b>Google Sheet</b>${txt}</span>`;
+}
+function renderChips(){
+  const c=(f,l)=>f?`<span class="chip ok" title="${esc(f.fileName)}"><b>${l}</b>${f.kind==='Master'?fmtInt(f.count)+' items':f.kind==='Opening'?'as on '+dstr(f.asOn):esc((f.periodText||'').replace(/\s+to\s+/i,' → '))}</span>`:`<span class="chip miss"><b>${l}</b>not loaded</span>`;
+  const mc=(k,l)=>S.masters&&S.masters[k]?`<span class="chip ok"><b>${l}</b>${fmtInt(S.masters[k].rows.length)}</span>`:'';
+  $('#fileChips').innerHTML=(S.files.Payment?c(S.files.Payment,'Payment'):'')+(S.files.Receipt?c(S.files.Receipt,'Receipt'):'')+sheetChip()+mc('Items','Items')+mc('Customers','Customers')+mc('Vendors','Vendors');
+  const co=(S.files.Payment&&S.files.Payment.company)||(S.files.Receipt&&S.files.Receipt.company);$('#coName').textContent=co||'Stock Control';
+  const sb=$('#sampleBar');const showLocal=S.source==='local'&&S.hosted;sb.hidden=!(S.source==='snapshot'||showLocal);
+  if(S.source==='snapshot')$('#sampleText').textContent=`Showing the registers loaded on ${new Date(S.srcAt||Date.now()).toLocaleDateString('en-IN')} (${S.files.Payment?S.files.Payment.periodText:''}). Load newer Tally exports with "Load / replace files" to update.`;
+  else if(showLocal)$('#sampleText').innerHTML=`Showing files loaded on this device on ${esc(new Date(S.srcAt).toLocaleString('en-IN'))}. The GitHub data was built on ${esc(new Date(S.hosted.builtAt).toLocaleString('en-IN'))}. <button class="btn sm" type="button" data-act="useHosted">Use the GitHub data</button>`;
+}
+function boot(resetPeriod){
+  if(!S.files.Payment&&!S.files.Receipt&&!S.files.App){S.base=null;S.A=null;renderChips();render();return}
+  buildBase();
+  if(resetPeriod||!S.from){if(S.preset==='custom')S.preset='90';applyPreset(S.preset)}
+  syncPeriodUI();analyse();renderChips();render();
+}
+function recalc(){analyse();render()}
+
+/* ============================== events ============================== */
+$('#fileInput').addEventListener('change',e=>{if(e.target.files.length)handleFiles([...e.target.files]);e.target.value=''});
+$('#pPreset').addEventListener('change',e=>{S.preset=e.target.value;if(S.preset!=='custom'){applyPreset(S.preset);syncPeriodUI();recalc()}});
+['#pFrom','#pTo'].forEach(id=>$(id).addEventListener('change',()=>{const f=fromIso($('#pFrom').value),t=fromIso($('#pTo').value);if(isNaN(f)||isNaN(t))return;
+  S.from=Math.min(f,t);S.to=Math.max(f,t);S.preset='custom';syncPeriodUI();recalc()}));
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;setMenu(false);go(b.dataset.tab)});
+$('#navToggle').addEventListener('click',()=>setMenu(!$('#side').classList.contains('open')));
+$('#scrim').addEventListener('click',()=>setMenu(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
+function go(t){S.tab=t;render();window.scrollTo({top:0})}
+$('#dlgClose').addEventListener('click',()=>{const d=$('#dlg');try{d.close()}catch(e){d.removeAttribute('open')}});
+$('#dlg').addEventListener('close',()=>{if(S.charts.i){S.charts.i.destroy();delete S.charts.i}if(S.charts.b){S.charts.b.destroy();delete S.charts.b}});
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,[data-item]');if(!t)return;
+  if(t.closest('#entryPage')&&entryClick(t))return;
+  if(t.dataset.mact&&masterClick(t))return;
+  if(t.dataset.sort){const [id,k]=t.dataset.sort.split('|');const st=S.tstate[id];if(st.key===k)st.dir*=-1;else{st.key=k;st.dir=(['name','cat','party','item','lastSup','vno'].includes(k))?1:-1}rerenderFor(id);return}
+  if(t.dataset.all){S.tstate[t.dataset.all].all=true;rerenderFor(t.dataset.all);return}
+  if(t.dataset.item){openItem(t.dataset.item);return}
+  if(t.dataset.go){go(t.dataset.go);return}
+  if(t.dataset.copy){doCopy(t.dataset.copy);return}
+  if(t.dataset.xlsx){doXlsx(t.dataset.xlsx);return}
+  if(t.dataset.editentry){startEdit(t.dataset.editentry);return}
+  if(t.dataset.party){closeDlg();S.f.eP=t.dataset.party;S.f.eQ='';S.f.eV='';saveF();go('entries');return}
+  if(t.dataset.cat){S.f.sCat=t.dataset.cat;saveF();go('stock');return}
+  if(t.dataset.abc){const [a,f]=t.dataset.abc.split('');S.f.sAbc=a;S.f.sFsn=f;S.f.sCat='';S.f.sQ='';saveF();go('stock');return}
+  const act=t.dataset.act;
+  if(act==='pick')$('#fileInput').click();
+  else if(act==='master')downloadMaster();
+  else if(act==='copyMaster')copyMaster();
+  else if(act==='useHosted')useHosted();
+  else if(act==='retryApp'){toast('Loading from the Google Sheet…');loadApp()}
+  else if(act==='forgetPw'){store.set('pw',null);toast('Saved password removed from this device');render()}
+  else if(act==='neverIn'){S.f.sQ='';saveF();showList('Sold but never received',S.A.items.filter(i=>i.inAll===0&&i.outAll>0).map(i=>i.name))}
+  else if(act==='dups')showList('Possible duplicate item names',S.dups.map(a=>a.join('  =  ')),true);
+  if(t.id==='setReset'){SET=Object.assign({},DEFAULTS);store.set('settings',{});buildBase();recalc()}
+  if(t.id==='dropMaster'){S.files.Master=null;idb.set('files',{Payment:pack(S.files.Payment),Receipt:pack(S.files.Receipt),Master:null,Opening:S.files.Opening,Journal:pack(S.files.Journal)});boot(false)}
+});
+function closeDlg(){const d=$('#dlg');if(d.open){try{d.close()}catch(e){d.removeAttribute('open')}}}
+function showList(title,arr,plain){$('#dlgTitle').textContent=title;$('#dlgBody').innerHTML=`<div class="panel"><p class="muted" style="margin-top:0">${arr.length} entries${plain?'':'. Click an item to open its ledger.'}</p><div style="display:grid;gap:4px">${arr.map(n=>plain?`<div class="mono">${esc(n)}</div>`:`<div>${itemLink(n)}</div>`).join('')}</div></div>`;const d=$('#dlg');if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}}
+function rerenderFor(id){if(id.startsWith('it-')){const sc=$('#dlg').scrollTop;openItem(S.curItem);$('#dlg').scrollTop=sc}else{const y=window.scrollY;render();window.scrollTo(0,y)}}
+function saveF(){}
+let tmr=null;
+document.addEventListener('input',e=>{const el=e.target;
+  if(el.dataset&&el.dataset.set){const k=el.dataset.set;clearTimeout(tmr);tmr=setTimeout(()=>{SET[k]=(k==='exclude'||k==='moqBasis')?el.value:Math.max(0,+el.value||0);if(!SET[k]&&['basisDays','leadDays','moqMonths'].includes(k))SET[k]=DEFAULTS[k];store.set('settings',SET);if(k==='exclude')buildBase();analyse();renderTabs()},350);return}
+  if(el.type==='search'&&el.id){clearTimeout(tmr);const id=el.id,pos=el.selectionStart;tmr=setTimeout(()=>{S.f[id]=el.value;saveF();Object.values(S.tstate).forEach(s=>s.all=false);render();const n=document.getElementById(id);if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}},250)}
+});
+document.addEventListener('submit',e=>{if(e.target.id==='entryForm'){e.preventDefault();saveEntry();return}if(e.target.id==='masterForm'){e.preventDefault();saveMaster();return}if(e.target.id==='colForm'){e.preventDefault();addColumn();return}if(e.target.id!=='unlockForm')return;e.preventDefault();const pw=$('#unlockPw').value;if(pw)tryUnlock(pw,$('#unlockRem').checked,false)});
+document.addEventListener('change',e=>{const el=e.target;if(el.closest&&el.closest('#entryForm')){entryChanged(el);return}if(el.closest&&el.closest('#masterForm,#colForm,#docForm,#coForm'))return;if(!el.id||el.closest('#periodBar')||el.closest('#unlockForm')||el.dataset.set||el.type==='file'||el.type==='search')return;
+  S.f[el.id]=el.type==='checkbox'?el.checked:el.value;saveF();render()});
+if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>render());
+new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ============================== start ============================== */
+(async function start(){
+  idb.del('files');
+  S.hosted=await fetchHosted();
+  S.locked=true;renderChips();
+  const pw=store.get('pw',null);if(pw&&await tryUnlock(pw,true,true))return;
+  render();
+})();
+</script>
+<script src="js/docs.js"></script>
+<!--PAGE-END-->
+</html>
