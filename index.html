@@ -1196,7 +1196,7 @@ async function doLogin(){
     let j={};try{j=await r.json()}catch(e){}
     if(r.status===503)throw new Error('The Google Sheet is not connected yet. Set SHEET_WEBAPP_URL and SHEET_SECRET in Vercel, then redeploy.');
     if(r.status===401){S.unlockErr='That username or password is not right. Check them and try again.';S.clearPw=true;render();const p=$('#lgPw');if(p)p.focus();return}
-    if(!r.ok||!j.ok)throw new Error(j.error||('The server answered '+r.status));
+    if(!r.ok||!j.ok)throw new Error(/^unauthori[sz]ed$/i.test(j.error||'')?'The Google Sheet refused the connection: the SECRET in the Apps Script does not match SHEET_SECRET in Vercel. Make them the same, then redeploy in Vercel.':(j.error||('The server answered '+r.status)));
     auth.set(j.token,rem);S.user=j.user;S.needLogin=false;S.unlockErr='';S.tab=homeTab();await openSheet();
   }catch(e){S.unlockErr=e.message;render()}
 }
