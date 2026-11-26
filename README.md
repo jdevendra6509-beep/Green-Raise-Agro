@@ -5,9 +5,23 @@ Office no. 116, First Floor, Amnora Apex, Near Amnora Mall, Hadapsar, Pune 41102
 
 An inventory dashboard for the Tally **Payment Register** (stock out) and **Receipt Register** (stock in), where item names are used as ledgers and the voucher amounts are quantities.
 
-Deploy on Vercel (see below). There is no login: the site opens straight to the data, so share its address only with people who should see and edit the stock.
+Deploy on Vercel (see below). Everyone signs in with a username and password.
 
-All data lives in the Google Sheet **Green Raise Agro Stock Entries** ([open](https://docs.google.com/spreadsheets/d/1LLk7_kyH1wcoMpt-LAJUNdH-ArcVmUG1GV1T_oQQW80/edit); tabs Entries, Items, Customers, Vendors, Documents, Company): stock entries, plus the Item, Customer and Vendor masters. Stock is the sum of the entries made on the New Entry page. Opening stock is entered as an Adjustment.
+## Logins and roles
+
+| Role | Can do |
+|---|---|
+| **Admin** | Everything: all reports, New Entry (Inward, Outward, Adjust stock), edit and delete entries, documents, masters, company details, settings, and the **Users** page |
+| **Warehouse Manager** | Only **New Entry** (Inward and Outward) and the **Entries** list. Cannot adjust stock, edit or delete entries, or see reports, documents, masters or users |
+
+- Logins are kept in the Google Sheet tab **Users** (Username, Name, Role, Password Hash, Status, Created At). Passwords are stored only as a salted scrypt hash, never as plain text. Manage them on **System → Users**: add a person, change their role, reset their password, or set them to Inactive to stop them signing in straight away.
+- Anyone can change their own password with **Change password** at the bottom of the menu.
+- "Entered by" on every entry is filled in by the server from the signed-in person, so it cannot be typed or faked.
+- The server (`api/entries.js`) checks the role on every request, and the sheet script checks that the person is still Active with the same role, so the limits hold even if someone calls the server directly.
+- "Keep me signed in" keeps the login for 30 days on that device; otherwise it lasts until the browser tab is closed (at most a day). Sign-ins are signed with `SHEET_SECRET` (or `AUTH_SECRET`, if you set one in Vercel). Changing that secret signs everyone out.
+- You can't remove, switch off or demote your own login, so there is always at least one admin.
+
+All data lives in the Google Sheet **Green Raise Agro Stock Entries** ([open](https://docs.google.com/spreadsheets/d/1LLk7_kyH1wcoMpt-LAJUNdH-ArcVmUG1GV1T_oQQW80/edit); tabs Entries, Items, Customers, Vendors, Documents, Company, Users): stock entries, plus the Item, Customer and Vendor masters. Stock is the sum of the entries made on the New Entry page. Opening stock is entered as an Adjustment.
 
 ## New Entry page (Google Sheet)
 

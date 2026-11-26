@@ -33,6 +33,10 @@ const COMPANY_DEFAULTS = {
   'State': 'Maharashtra',
   'State Code': '27'
 };
+// Logins: one row per person. Passwords are stored only as a salted scrypt hash made by the website's server.
+const USERS = 'Users';
+const USER_HEAD = ['Username', 'Name', 'Role', 'Password Hash', 'Status', 'Created At'];
+const ROLES = ['Admin', 'Warehouse Manager'];
 // text that starts like a formula is stored as plain text
 const txt_ = x => { const s = String(x || ''); return /^[=+@]/.test(s) ? "'" + s : s; };
 
@@ -50,6 +54,30 @@ function sheet_() {
   let sh = ss.getSheetByName(SHEET);
   if (!sh) { sh = ss.insertSheet(SHEET); sh.appendRow(HEAD); sh.setFrozenRows(1); }
   return sh;
+}
+
+function users_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(USERS);
+  if (!sh) {
+    sh = ss.insertSheet(USERS);
+    sh.getRange(1, 1, 1, USER_HEAD.length).setValues([USER_HEAD]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function readUsers_() {
+  const v = users_().getDataRange().getValues().slice(1);
+  return v.map((r, i) => ({ row: i + 2, username: String(r[0] || '').trim(), name: String(r[1] || '').trim(), role: String(r[2] || '').trim(),
+    hash: String(r[3] || ''), status: String(r[4] || 'Active').trim() || 'Active',
+    created: r[5] instanceof Date ? r[5].toISOString() : String(r[5] || '') })).filter(u => u.username);
+}
+const findUser_ = (list, name) => list.find(u => u.username.toLowerCase() === String(name || '').trim().toLowerCase());
+// The website's server says who is asking; refuse if that person was removed, switched off or changed role since signing in.
+function actorOk_(a) {
+  if (!a || !a.username) return false;
+  const u = findUser_(readUsers_(), a.username);
+  return !!u && /^active$/i.test(u.status) && u.role === a.role;
 }
 
 function master_(name) {
@@ -111,6 +139,34 @@ function readDocs_(tz) {
 
 function handle_(p) {
   if (!p.secret || p.secret !== SECRET) return out_({ ok: false, error: 'unauthorised' });
+  // sign-in: the server checks the password hash itself
+  if (p.action === 'users') return out_({ ok: true, users: readUsers_().map(u => ({ username: u.username, name: u.name, role: u.role, hash: u.hash, status: u.status, created: u.created })) });
+  if (!actorOk_(p.actor)) return out_({ ok: false, error: 'signed-out' });
+
+  if (p.action === 'userSave' || p.action === 'userDelete') {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(20000);
+    try {
+      const sh = users_(), list = readUsers_(), u = p.user || {};
+      const cur = findUser_(list, u.username);
+      if (p.action === 'userDelete') {
+        if (!cur) return out_({ ok: false, error: 'User not found. Refresh and try again.' });
+        sh.deleteRow(cur.row);
+        return out_({ ok: true });
+      }
+      if (u.role && ROLES.indexOf(u.role) < 0) return out_({ ok: false, error: 'Unknown role.' });
+      if (cur) {
+        if (u.name !== undefined) sh.getRange(cur.row, 2).setValue(txt_(u.name));
+        if (u.role) sh.getRange(cur.row, 3).setValue(u.role);
+        if (u.hash) sh.getRange(cur.row, 4).setValue(u.hash);
+        if (u.status) sh.getRange(cur.row, 5).setValue(u.status);
+        return out_({ ok: true });
+      }
+      if (!u.hash) return out_({ ok: false, error: 'A new user needs a password.' });
+      sh.appendRow([txt_(u.username), txt_(u.name), u.role || 'Warehouse Manager', u.hash, u.status || 'Active', new Date()]);
+      return out_({ ok: true });
+    } finally { lock.releaseLock(); }
+  }
   const sh = sheet_();
   const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
 
@@ -238,5 +294,6 @@ function handle_(p) {
   }));
   const masters = {};
   Object.keys(MASTERS).forEach(k => { masters[k] = readMaster_(k, tz); });
-  return out_({ ok: true, rows: rows, masters: masters, docs: readDocs_(tz), company: readCompany_(), url: SpreadsheetApp.getActiveSpreadsheet().getUrl() });
+  const users = readUsers_().map(u => ({ username: u.username, name: u.name, role: u.role, status: u.status, created: u.created }));
+  return out_({ ok: true, rows: rows, masters: masters, docs: readDocs_(tz), company: readCompany_(), users: users, url: SpreadsheetApp.getActiveSpreadsheet().getUrl() });
 }
