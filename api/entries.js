@@ -19,8 +19,20 @@ function checkEntry(en) {
   return null;
 }
 
-const MASTERS = ['Items', 'Customers', 'Vendors'];
+const MASTERS = ['Items', 'Customers', 'Vendors', 'Entities'];
 const cleanValue = v => typeof v === 'number' && isFinite(v) ? v : String(v === null || v === undefined ? '' : v).replace(/\s+/g, ' ').trim().slice(0, 500);
+// extra details on an entry (delivery challan no., vehicle, packing…): short text or numbers only
+const RESERVED = ['Entry ID', 'Date', 'Type', 'Item', 'Qty', 'Party', 'Bill No', 'Narration', 'Entered By', 'Created At', 'Status', 'Counted Stock'];
+function cleanExtra(x) {
+  const o = {};
+  if (!x || typeof x !== 'object') return o;
+  for (const [k, v] of Object.entries(x).slice(0, 40)) {
+    const key = String(k).replace(/\s+/g, ' ').trim().slice(0, 40);
+    if (!key || RESERVED.includes(key) || v === null || v === undefined || v === '') continue;
+    o[key] = typeof v === 'number' && isFinite(v) ? v : String(v).replace(/\r/g, '').trim().slice(0, 500);
+  }
+  return o;
+}
 function cleanRecord(r) {
   const o = {};
   for (const [k, v] of Object.entries(r || {}).slice(0, 80)) { const key = String(k).trim().slice(0, 60); if (key) o[key] = cleanValue(v); }
@@ -47,7 +59,7 @@ function checkMaster(b) {
   }
   if (b.action === 'masterSave' && (!b.record || typeof b.record !== 'object')) return 'Nothing to save.';
   if (b.action === 'masterDelete' && !b.id) return 'Choose a record to delete.';
-  if (b.action === 'masterBulkAdd' && (!Array.isArray(b.records) || b.records.length > 5000)) return 'Send between 1 and 5,000 records.';
+  if ((b.action === 'masterBulkAdd' || b.action === 'masterBulkUpsert') && (!Array.isArray(b.records) || !b.records.length || b.records.length > 5000)) return 'Send between 1 and 5,000 records.';
   return null;
 }
 
@@ -134,8 +146,8 @@ module.exports = async (req, res) => {
         if (!admin && en.type === 'ADJ') return deny();
         payload = { action: 'add', entry: {
           date: en.date, type: en.type, party: String(en.party || '').trim(), bill: String(en.bill || '').trim(),
-          narration: String(en.narration || '').trim(), by: me.n,
-          lines: en.lines.map(l => ({ item: String(l.item).replace(/\s+/g, ' ').trim(), qty: Number(l.qty),
+          narration: String(en.narration || '').trim(), by: me.n, extra: cleanExtra(en.extra),
+          lines: en.lines.map(l => ({ item: String(l.item).replace(/\s+/g, ' ').trim(), qty: Number(l.qty), extra: cleanExtra(l.extra),
             counted: l.counted === null || l.counted === undefined || l.counted === '' ? null : Number(l.counted) })) } };
       } else if (body.action === 'passwordChange') {
         const err = pwProblem(body.newPassword);
@@ -171,7 +183,7 @@ module.exports = async (req, res) => {
         payload = { action: 'docDelete', id: String(body.id) };
       } else if (body.action === 'companySave' && body.company && typeof body.company === 'object') {
         payload = { action: 'companySave', company: cleanRecord(body.company) };
-      } else if (/^master(Save|Delete|AddColumn|BulkAdd)$/.test(body.action || '')) {
+      } else if (/^master(Save|Delete|AddColumn|BulkAdd|BulkUpsert)$/.test(body.action || '')) {
         const err = checkMaster(body);
         if (err) return send(400, { ok: false, error: err });
         payload = { action: body.action, master: body.master, id: body.id, column: body.column && String(body.column).trim(),
@@ -191,7 +203,7 @@ module.exports = async (req, res) => {
     if (payload.action === 'list') {
       if (!Array.isArray(j.users)) return send(502, { ok: false, error: OLD_SCRIPT });
       j.me = { username: me.u, name: me.n, role: me.r };
-      if (!admin) { delete j.docs; delete j.company; delete j.users; }
+      if (!admin) { delete j.docs; delete j.users; } // company details stay: they print on delivery challans
     }
     return send(200, j);
   } catch (e) {

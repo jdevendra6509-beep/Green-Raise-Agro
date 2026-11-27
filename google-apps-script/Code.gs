@@ -11,10 +11,14 @@ const HEAD = ['Entry ID', 'Date', 'Type', 'Item', 'Qty', 'Party', 'Bill No', 'Na
 const TYPES = { IN: 'Inward', OUT: 'Outward', ADJ: 'Adjustment' };
 // Masters: one sheet each. The first column is a hidden-from-users ID; any other column can be added by users.
 const MASTERS = {
-  Items: ['ID', 'Item Name', 'Category', 'Unit', 'HSN', 'GST %', 'MOQ', 'Max Stock', 'Lead Time (days)', 'Rate', 'Merge Into', 'Status', 'Notes'],
+  Items: ['ID', 'Item Name', 'Category', 'Unit', 'Packing', 'HSN', 'GST %', 'MOQ', 'Max Stock', 'Lead Time (days)', 'Rate', 'Merge Into', 'Status', 'Notes'],
   Customers: ['ID', 'Customer Name', 'Contact Person', 'Phone', 'Email', 'GSTIN', 'Address', 'City', 'Credit Days', 'Notes'],
-  Vendors: ['ID', 'Vendor Name', 'Contact Person', 'Phone', 'Email', 'GSTIN', 'Address', 'City', 'Lead Time (days)', 'Notes']
+  Vendors: ['ID', 'Vendor Name', 'Contact Person', 'Phone', 'Email', 'GSTIN', 'Address', 'City', 'Lead Time (days)', 'Notes'],
+  // where goods are dispatched from; recorded on delivery challans, does not change stock
+  Entities: ['ID', 'Entity Name', 'Address', 'GSTIN', 'Phone', 'Notes']
 };
+// Entries can carry extra details (delivery challan no., vehicle, packing…). Each becomes its own column after HEAD,
+// added automatically the first time it is used, so new fields never need a script change.
 // Proforma invoices and purchase orders: one row per item line; header fields repeat on each line.
 const DOCS = 'Documents';
 const DOC_HEAD = ['Doc ID', 'Doc Type', 'Doc No', 'Date', 'Party', 'Party Address', 'Party GSTIN', 'Party State', 'Buyer Ref', 'Payment Terms',
@@ -24,7 +28,7 @@ const DOC_KEYS = ['id', 'type', 'no', 'date', 'party', 'address', 'gstin', 'stat
   'item', 'hsn', 'qty', 'unit', 'rate', 'disc', 'gst', 'amount', 'narration', 'by', 'created', 'status'];
 // Company details printed on documents: a two-column Field / Value sheet.
 const COMPANY = 'Company';
-const COMPANY_FIELDS = ['Company Name', 'Address', 'City', 'State', 'State Code', 'GSTIN', 'PAN', 'Phone', 'Email', 'Bank Name', 'Account No', 'IFSC', 'Branch', 'Declaration'];
+const COMPANY_FIELDS = ['Company Name', 'Address', 'City', 'State', 'State Code', 'GSTIN', 'PAN', 'Phone', 'Email', 'Website', 'Bank Name', 'Account No', 'IFSC', 'Branch', 'Declaration'];
 // Filled in when the Company tab is first created; edit later in Settings → Company details.
 const COMPANY_DEFAULTS = {
   'Company Name': 'Green Raise Agro Pvt Ltd',
@@ -90,6 +94,15 @@ function master_(name) {
   }
   return sh;
 }
+// make sure every name in cols is a header of sh (added at the end if missing); returns the header row
+function ensureCols_(sh, cols) {
+  const head = head_(sh);
+  const add = [];
+  cols.forEach(c => { c = String(c || '').trim(); if (c && head.indexOf(c) < 0 && add.indexOf(c) < 0) add.push(c); });
+  if (add.length) { sh.getRange(1, head.length + 1, 1, add.length).setValues([add]).setFontWeight('bold'); return head.concat(add); }
+  return head;
+}
+const cell_ = v => typeof v === 'number' && isFinite(v) ? v : txt_(v === null || v === undefined ? '' : v);
 function head_(sh) { return sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(h => String(h).trim()); }
 function newId_() { return 'M' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36); }
 function readMaster_(name, tz) {
@@ -182,9 +195,16 @@ function handle_(p) {
       const [y, m, d] = en.date.split('-').map(Number);
       const day = new Date(y, m - 1, d, 12);
       const now = new Date();
-      const rows = en.lines.map(l => [id, day, TYPES[en.type], txt_(l.item), Number(l.qty), txt_(en.party), txt_(en.bill),
-        txt_(en.narration), txt_(en.by), now, 'Active', l.counted === null || l.counted === undefined ? '' : Number(l.counted)]);
-      sh.getRange(sh.getLastRow() + 1, 1, rows.length, HEAD.length).setValues(rows);
+      const ex = en.extra && typeof en.extra === 'object' ? en.extra : {};
+      const exCols = Object.keys(ex).concat([].concat.apply([], en.lines.map(l => Object.keys(l.extra || {})))).filter(k => HEAD.indexOf(k) < 0);
+      const head = ensureCols_(sh, exCols);
+      const rows = en.lines.map(l => {
+        const base = [id, day, TYPES[en.type], txt_(l.item), Number(l.qty), txt_(en.party), txt_(en.bill),
+          txt_(en.narration), txt_(en.by), now, 'Active', l.counted === null || l.counted === undefined ? '' : Number(l.counted)];
+        const all = Object.assign({}, ex, l.extra || {});
+        return base.concat(head.slice(HEAD.length).map(h => h in all ? cell_(all[h]) : ''));
+      });
+      sh.getRange(sh.getLastRow() + 1, 1, rows.length, head.length).setValues(rows);
       sh.getRange(sh.getLastRow() - rows.length + 1, 2, rows.length, 1).setNumberFormat('dd-mmm-yyyy');
       return out_({ ok: true, id: id, lines: rows.length });
     } finally { lock.releaseLock(); }
@@ -217,6 +237,32 @@ function handle_(p) {
         const id = newId_();
         ms.getRange(ms.getLastRow() + 1, 1, 1, head.length).setValues([rowFor_(head, rec, id)]);
         return out_({ ok: true, id: id });
+      }
+      if (p.action === 'masterBulkUpsert') {
+        // Excel upload: match on the name column (first after ID), ignoring case and extra spaces.
+        // Filled cells overwrite, empty cells leave the sheet as it is; unknown columns are added.
+        const recs = Array.isArray(p.records) ? p.records : [];
+        head = ensureCols_(ms, [].concat.apply([], recs.map(r => Object.keys(r))));
+        const nameCol = head[1], key = s => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const last = ms.getLastRow();
+        const data = last > 1 ? ms.getRange(2, 1, last - 1, head.length).getValues() : [];
+        const at = {};
+        data.forEach((r, i) => { const k = key(r[1]); if (k && !(k in at)) at[k] = i; });
+        let updated = 0; const fresh = [];
+        recs.forEach(r => {
+          const k = key(r[nameCol]); if (!k) return;
+          if (k in at) {
+            const row = data[at[k]];
+            head.forEach((h, c) => { if (h !== 'ID' && h !== nameCol && h in r && r[h] !== '' && r[h] !== null && r[h] !== undefined) row[c] = cell_(r[h]); });
+            updated++;
+          } else {
+            const row = head.map(h => h === 'ID' ? newId_() : (h in r ? cell_(r[h]) : ''));
+            at[k] = -1; fresh.push(row);
+          }
+        });
+        if (data.length) ms.getRange(2, 1, data.length, head.length).setValues(data);
+        if (fresh.length) ms.getRange(ms.getLastRow() + 1, 1, fresh.length, head.length).setValues(fresh);
+        return out_({ ok: true, added: fresh.length, updated: updated });
       }
       if (p.action === 'masterBulkAdd') {
         const recs = Array.isArray(p.records) ? p.records : [];
@@ -285,12 +331,15 @@ function handle_(p) {
 
   // list
   const v = sh.getDataRange().getValues();
+  const eh = v[0].map(h => String(h).trim());
+  const extraOf_ = r => { const o = {}; for (let c = HEAD.length; c < eh.length; c++) if (eh[c] && r[c] !== '' && r[c] !== null) o[eh[c]] = r[c] instanceof Date ? fmt(r[c]) : r[c]; return o; };
   const fmt = x => x instanceof Date ? Utilities.formatDate(x, tz, 'yyyy-MM-dd') : String(x || '');
   const rows = v.slice(1).filter(r => r[0] !== '' && r[3] !== '').map(r => ({
     id: String(r[0]), date: fmt(r[1]), type: String(r[2]), item: String(r[3]), qty: Number(r[4]),
     party: String(r[5] || ''), bill: String(r[6] || ''), narration: String(r[7] || ''), by: String(r[8] || ''),
     created: r[9] instanceof Date ? r[9].toISOString() : String(r[9] || ''), status: String(r[10] || 'Active'),
-    counted: r[11] === '' || r[11] === null ? null : Number(r[11])
+    counted: r[11] === '' || r[11] === null ? null : Number(r[11]),
+    x: extraOf_(r)
   }));
   const masters = {};
   Object.keys(MASTERS).forEach(k => { masters[k] = readMaster_(k, tz); });

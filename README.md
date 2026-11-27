@@ -25,7 +25,7 @@ All data lives in the Google Sheet **Green Raise Agro Stock Entries** ([open](ht
 
 ## New Entry page (Google Sheet)
 
-Stock movements are entered on the **New Entry** tab instead of Tally. These include Inward (purchases and returns from customers), Outward (sales and returns to suppliers) and Adjust stock (add or remove a quantity, or set stock to a counted figure). Back-dated entries are allowed.
+Stock movements are entered on the **New Entry** tab instead of Tally. These include Inward (purchases and returns), **Delivery Challan** (goods dispatched to a customer; this is the stock-out entry) and Adjust stock (add or remove a quantity, or set stock to a counted figure). Back-dated entries are allowed.
 
 - Each entry is saved as rows in the Google Sheet **Green Raise Agro Stock Entries**, sheet `Entries`, one row per item.
 - The dashboard reads the sheet live on every visit, so a new entry shows up in every report immediately.
@@ -35,11 +35,25 @@ Stock movements are entered on the **New Entry** tab instead of Tally. These inc
 
 How it connects: the page calls `/api/entries` on Vercel (`api/entries.js`). That function talks to the sheet through its Apps Script web app (`google-apps-script/Code.gs`). Vercel keeps two settings: `SHEET_WEBAPP_URL`, the web app address, and `SHEET_SECRET`, the same value as `SECRET` in the script. Browsers never see either of them.
 
+### Delivery Challan
+
+Choosing **Delivery Challan** on New Entry records goods going out and prints the challan.
+
+- **Challan details:** Dispatch from (entity), DC no., date, customer name, address, mobile, email, reference, and for each item the HSN code, packing (e.g. `10 kg`), quantity, unit (e.g. `Box`) and total (worked out from packing × qty, e.g. 5 Box × 10 kg = 50 kg; type over it if needed). Transport: vehicle no., transporter, charges per MT, and the transport total (worked out from the total weight; type over it if needed).
+- **Autofill:** picking a customer fills address, mobile and email from the Customer master; picking an item fills HSN, packing and unit from the Item master.
+- **DC numbers:** the next number is suggested (highest used + 1). For the very first challan, type the number your pad has reached. A number already used on another challan is refused.
+- **Entity:** the entities are kept on Masters → Entities. The entity is only recorded on the challan; it never changes stock.
+- **Stock:** only the item quantities change stock, exactly like the old Outward entry. In the Google Sheet the Type stays `Outward`.
+- **Printing:** after saving, the challan opens in a preview with **Print 3 copies**: Original – Customer, Duplicate – Transporter and Triplicate – Office, one A4 page each, laid out like the printed challan pad. Any saved challan can be printed again from "Entries made here". Company name, address, phone, email and website come from Settings → Company details.
+- **Storage:** the extra details are saved in extra columns of the `Entries` tab (Entity, DC No, Customer Address, Mobile No, Email ID, Reference, Vehicle No, Transporter, Transport Rate (per MT), Transport Charges, HSN Code, Packing, Unit, Line Total). The script adds a column the first time it is needed.
+
 ### Masters (Google Sheet)
 
 The same spreadsheet holds three masters, each in its own tab: **Items**, **Customers** and **Vendors**. They are edited on the Masters pages of the dashboard (add, edit, delete, **+ Add column**), or directly in the sheet. Every column you add, in either place, shows up automatically. The first column, `ID`, is used internally, so leave it as it is.
 
 - **Items:** Category (the only source of item categories), MOQ, Max Stock, Lead Time (days), Rate, Unit and Merge Into feed Buy Now and the stock reports, and override the Excel Item Master. Status can be `Active`, `Inactive` (hidden from New Entry) or `Exclude` (not a stock item).
+- **Excel upload:** on each master page, **Download template** gives an .xlsx with the master's columns (and a "How to fill" sheet). **Upload Excel** shows how many records will be added, updated or skipped before anything is saved. Records are matched on the name column, ignoring case and spaces; filled cells overwrite, empty cells leave the existing value; extra columns in the file are added to the master; the saved name is never changed.
+- **Entities:** the fourth master. These are the places or companies goods are dispatched from, chosen on each delivery challan.
 - **Filling from Tally:** "Add … from Tally data" adds every item, customer or vendor name found in the Tally files that isn't in the master yet.
 - **New Entry:** item and party suggestions come from the masters and from history.
 

@@ -36,7 +36,7 @@ function partyInfo(kind,name){
 }
 function itemInfo(name){
   const r=mrows('Items').find(x=>cleanName(x['Item Name']).toUpperCase()===cleanName(name).toUpperCase());if(!r)return null;
-  return {hsn:pick(r,/^hsn/i),unit:pick(r,/^unit|uom/i),rate:toNum(pick(r,/^rate$|price/i)),gst:toNum(pick(r,/gst/i))};
+  return {hsn:pick(r,/^hsn/i),unit:pick(r,/^unit|uom/i),pack:pick(r,/^pack/i),rate:toNum(pick(r,/^rate$|price/i)),gst:toNum(pick(r,/gst/i))};
 }
 function companyCode(){const c=S.company||{};return String(c['State Code']||'').trim().padStart(2,'0').replace(/^00$/,'')||stateCode(c.GSTIN)}
 
@@ -245,7 +245,7 @@ async function saveDoc(andPrint){
 }
 
 /* ---------- company details (Settings) ---------- */
-const CO_FIELDS=['Company Name','Address','City','State','State Code','GSTIN','PAN','Phone','Email','Bank Name','Account No','IFSC','Branch','Declaration'];
+const CO_FIELDS=['Company Name','Address','City','State','State Code','GSTIN','PAN','Phone','Email','Website','Bank Name','Account No','IFSC','Branch','Declaration'];
 function companyPanel(){
   if(S.source!=='hosted'||S.company===null)return '';
   const c=S.company||{};
@@ -297,7 +297,7 @@ document.addEventListener('change',e=>{
 /* ---------- styles: form and Tally print layout ---------- */
 (function(){const st=document.createElement('style');st.textContent=`
 #docForm label,#coForm label{display:grid;gap:4px;font-size:13px;color:var(--fg-2)}
-#docForm input,#docForm textarea,#coForm input,#coForm textarea{border:1px solid var(--line-2);background:var(--surface);color:var(--fg);border-radius:var(--r);padding:7px 9px;font:inherit;min-width:0;width:100%}
+#docForm :is(input,select,textarea),#coForm :is(input,select,textarea){min-width:0;width:100%}
 #docForm .full,#coForm .full{margin-top:10px}
 .dtable td{padding:4px}.dtable td input{padding:5px 6px!important}
 .dtable td:nth-child(1){min-width:200px}.dtable td:nth-child(2){width:90px}.dtable td:nth-child(3),.dtable td:nth-child(5){width:100px}.dtable td:nth-child(4){width:64px}.dtable td:nth-child(6),.dtable td:nth-child(7){width:70px}
