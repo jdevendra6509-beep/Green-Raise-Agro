@@ -41,6 +41,7 @@ Choosing **Delivery Challan** on New Entry records goods going out and prints th
 
 - **Challan details:** Dispatch from (entity), DC no., date, customer name, address, mobile, email, reference, and for each item the HSN code, packing (e.g. `10 kg`), quantity, unit (e.g. `Box`) and total (worked out from packing × qty, e.g. 5 Box × 10 kg = 50 kg; type over it if needed). Transport: vehicle no., transporter, charges per MT, and the transport total (worked out from the total weight; type over it if needed).
 - **Add new from the form:** "+ New" next to Entity, Customer and Supplier, and "+ New item" under the goods, open the master form right on the entry page; the name you typed is filled in, and after saving it is selected in the entry. Warehouse Managers can add new records this way but cannot edit or delete existing ones.
+- **Dropdowns:** item, customer, supplier and unit fields open a searchable list as you type, with unit, packing, HSN and stock for items and city and phone for parties. Use ↑ ↓ and Enter, or Tab to complete. If nothing matches, the list offers "+ Add … as a new item/customer/supplier".
 - **Autofill:** picking a customer fills address, mobile and email from the Customer master; picking an item fills HSN, packing and unit from the Item master.
 - **DC numbers:** the next number is suggested (highest used + 1). For the very first challan, type the number your pad has reached. A number already used on another challan is refused.
 - **Entity:** the entities are kept on Masters → Entities. The entity is only recorded on the challan; it never changes stock.
@@ -59,6 +60,9 @@ The same spreadsheet holds three masters, each in its own tab: **Items**, **Cust
 - **New Entry:** item and party suggestions come from the masters and from history.
 
 ### Proforma invoices and purchase orders
+
+Hidden from the menu (not used by Green Raise Agro). The code is still in `js/docs.js`, which also holds Settings → Company details; to bring the pages back, add `['Documents',['pi','po']]` to `NAV` in `index.html`.
+
 
 The **Documents** section has **Proforma Invoice** and **Purchase Order** pages (code in `js/docs.js`).
 

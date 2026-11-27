@@ -158,7 +158,7 @@ dialog .kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr))}
 /* toolbar + tables */
 .tool{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
 .tool input[type=search]{flex:1 1 220px;max-width:340px}
-.tool .sp{margin-left:auto;display:flex;gap:6px}
+.sp{display:flex;gap:6px;flex-wrap:wrap}.tool .sp,.panel-h .sp{margin-left:auto}
 .tool label{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--fg-2)}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;max-height:70vh}
 table{border-collapse:collapse;width:100%;font-size:13px}
@@ -221,6 +221,15 @@ dialog::backdrop{background:rgb(0 0 0 / .45)}
 @media (max-width:640px){.kpi .v{font-size:24px}.top{position:static}.tw{max-height:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
+
+/* ===================== polish ===================== */
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.side{scrollbar-width:thin;scrollbar-color:#3a443b transparent}
+.side::-webkit-scrollbar{width:8px}.side::-webkit-scrollbar-thumb{background:#3a443b;border-radius:8px}.side::-webkit-scrollbar-track{background:transparent}
+a.il,button.il{color:var(--fg);border-bottom:0;font-weight:500;text-decoration:none;text-underline-offset:3px;transition:color .12s}
+a.il:hover,button.il:hover{color:var(--accent-ink);text-decoration:underline;text-decoration-color:var(--accent)}
+.panel-h .sp{order:1}.panel-h p{order:2}
 /* ===================== design layer: one look for every control, card and form ===================== */
 :root{--rad:10px;--rad-lg:14px;--sh1:0 1px 2px rgb(16 24 16 / .05),0 1px 3px rgb(16 24 16 / .04);--sh2:0 10px 30px rgb(16 24 16 / .12),0 2px 6px rgb(16 24 16 / .06);--ring:0 0 0 3px rgb(63 122 34 / .22);--ctl:38px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--sh1:0 1px 2px rgb(0 0 0 / .35);--sh2:0 12px 32px rgb(0 0 0 / .5);--ring:0 0 0 3px rgb(140 193 82 / .28)}}
@@ -455,9 +464,9 @@ const DEFAULTS={
   basisDays:90,     // sales window used for average daily sale
   moqBasis:'ly',    // automatic MOQ when the Item Master has none: 'ly' = same months last year, 'recent' = latest months
   moqMonths:3,      // MOQ = average monthly sale over this many months
-  minBills:2,       // an item must have at least this many sale bills in the sales window to appear in Buy Now
+  minBills:2,       // an item must have at least this many challans in the sales window to appear in Buy Now
   nmDays:180,       // no sale for this many days = non-moving
-  fastBills:24,     // 24+ sale bills in 365 days = fast moving
+  fastBills:24,     // 24+ challans in 365 days = fast moving
   excessDays:180,   // stock covering more than this many days of sale = excess
   exclude:'BED DEBTS|BAD DEBTS|DISCOUNT|ROUND OFF|FREIGHT|TRANSPORT|CARTAGE|LABOUR|GST'
 };
@@ -517,10 +526,13 @@ function buildBase(){
   const tallyEnd=vouchers.length?Math.max(...vouchers.map(v=>v.d)):null;
   // entries made on the New Entry page (Google Sheet): Inward / Outward like Tally, Adjustment like the Journal
   const app=S.files.App;let appN=0,badDate=0;const allRows=[];
+  // one spelling per party: the Customer/Vendor master's, else the first one entered; grouping ignores capitals
+  const pnice=new Map();const addNice=n=>{n=cleanName(n);const k=n.toUpperCase();if(n&&!pnice.has(k))pnice.set(k,n)};
+  [...mrowsSafe('Customers').map(r=>r['Customer Name']),...mrowsSafe('Vendors').map(r=>r['Vendor Name']),...(app?app.rows.map(r=>r.party):[])].forEach(addNice);
   if(app){const g=new Map();for(const r of app.rows){if(/deleted/i.test(r.status||''))continue;if(!g.has(r.id))g.set(r.id,[]);g.get(r.id).push(r)}
     for(const rs of g.values()){const r0=rs[0];const d=sheetDay(r0.date);if(d==null){badDate+=rs.length;continue}
       const ty=/^in/i.test(r0.type)?'IN':/^out/i.test(r0.type)?'OUT':'ADJ',adj=ty==='ADJ',t0=ty==='IN'?1:-1;
-      const party=r0.party?cleanParty(r0.party):adj?'STOCK ADJUSTMENT':'(NO NAME)';
+      const party=r0.party?(pnice.get(cleanName(r0.party).toUpperCase())||cleanName(r0.party)):adj?'Stock adjustment':'(NO NAME)';
       const vo={d,t:adj?0:t0,adj,app:true,id:r0.id,vno:r0.bill||('APP-'+r0.id),party,rawParty:(r0.party||'')+' '+(r0.narration||''),n:rs.length,cond:false,cancel:false};
       vouchers.push(vo);appN++;
       for(const r of rs){if(adj&&/^\*?\s*all items\s*\*?$/i.test(cleanName(r.item))&&r.counted!=null&&isFinite(+r.counted)){allRows.push({d,vo,party,counted:+r.counted});continue}
@@ -637,7 +649,7 @@ function healthChecks(){
   const hasOpen=S.files.Opening||(S.files.Master&&Object.values(S.files.Master.items).some(m=>m.open!=null||m.phys!=null));
   const negN=A.items.filter(i=>i.neg).length;
   if(B.badDate)out.push({lvl:'serious',t:`${B.badDate} rows in the Google Sheet were skipped`,p:'Their date could not be read. Check the Date column in the Entries sheet holds a real date.'});
-  if(S.files.App)out.push({lvl:'info',t:`${B.appN} entries from the New Entry page`,p:`Read live from the Google Sheet. Inward adds stock, Outward is a sale, Adjustment changes stock only.`});
+  if(S.files.App)out.push({lvl:'info',t:`${B.appN} entries from the New Entry page`,p:`Read live from the Google Sheet. Inward adds stock, a Delivery Challan takes it out, and Adjust stock corrects it.`});
   else if(S.appState==='error')out.push({lvl:'warn',t:'Entries from the Google Sheet could not be loaded',p:S.appErr||'Refresh the page to try again.'});
   const J=S.files.Journal;
   if(J){const jl=B.lines.filter(l=>l.adj);const jo=jl.filter(l=>l.t<0).length,ji=jl.length-jo;
@@ -736,8 +748,8 @@ function doXlsx(id){const r=exportRows(id);if(!r)return;try{const ws=XLSX.utils.
 const TABS=[
   ['overview','Overview'],['entry','New Entry'],['buy','Buy Now'],['min','Below MOQ'],['neg','Negative'],['top','Top Selling'],['nonmoving','Non-Moving'],
   ['stock','Stock Summary'],['entries','Entries'],['parties','Customers & Suppliers'],['cats','Categories'],['health','Data Health'],['pi','Proforma Invoice'],['po','Purchase Order'],['mItems','Item Master'],['mCust','Customer Master'],['mVend','Vendor Master'],['mEnt','Entities'],['users','Users'],['settings','Settings']];
-const NAV=[['Dashboard',['overview']],['Transactions',['entry','entries']],['Documents',['pi','po']],['Purchasing',['buy','min']],['Stock',['stock','neg','nonmoving','cats']],['Sales',['top','parties']],['Masters',['mItems','mCust','mVend','mEnt']],['System',['health','users','settings']]];
-// Warehouse Manager: only Inward / Outward entries and the entry list.
+const NAV=[['Dashboard',['overview']],['Transactions',['entry','entries']],['Purchasing',['buy','min']],['Stock',['stock','neg','nonmoving','cats']],['Sales',['top','parties']],['Masters',['mItems','mCust','mVend','mEnt']],['System',['health','users','settings']]];
+// Warehouse Manager: only Inward / Delivery challans and the entry list.
 const NAV_WAREHOUSE=[['Transactions',['entry','entries']]];
 const isAdmin=()=>!!S.user&&S.user.role==='Admin';
 const navFor=()=>isAdmin()?NAV:NAV_WAREHOUSE;
@@ -748,6 +760,8 @@ const ICON={mEnt:'M3 21h18M4 21V10l8-6 8 6v11M9 21v-5h6v5M9 12h.01M15 12h.01',us
   cats:'M4 4h7l9 9-7 7-9-9zM8 8h.01',top:'M3 17l6-6 4 4 8-8M15 7h6v6',parties:'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 12 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.6',
   health:'M3 12h4l3-8 4 16 3-8h4',settings:'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z'};
 const icon=k=>`<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="${ICON[k]||''}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+// pages whose figures depend on the From / To period; the filter is hidden elsewhere
+const PERIOD_TABS=['overview','buy','min','neg','top','nonmoving','stock','entries','parties','cats','health'];
 const tabLabel=k=>(TABS.find(t=>t[0]===k)||[k,k])[1];
 const tabGroup=k=>(navFor().find(g=>g[1].includes(k))||[''])[0];
 function renderTabs(){
@@ -789,25 +803,25 @@ overview(){
     <button type="button" class="kpi ${I.filter(i=>i.belowMin).length?'serious':''}" data-go="min"><span class="l">Below MOQ</span><span class="v">${fmtInt(I.filter(i=>i.belowMin).length)}</span><span class="s">stock under minimum level</span></button>
     <button type="button" class="kpi ${I.filter(i=>i.neg).length?'crit':''}" data-go="neg"><span class="l">Negative stock</span><span class="v">${fmtInt(I.filter(i=>i.neg).length)}</span><span class="s">of ${fmtInt(I.length)} items</span></button>
     <button type="button" class="kpi ${nm.length?'warn':''}" data-go="nonmoving"><span class="l">Non-moving</span><span class="v">${fmtInt(nm.length)}</span><span class="s">with stock, no sale in ${SET.nmDays} days</span></button>
-    <button type="button" class="kpi" data-go="top"><span class="l">Sale bills</span><span class="v">${fmtInt(billsP)}</span><span class="s">${delta==null?'in period':`${delta>=0?'▲':'▼'} ${fmtInt(Math.abs(delta*100))}% vs previous ${A.plen} days`}</span></button>
+    <button type="button" class="kpi" data-go="top"><span class="l">Challans</span><span class="v">${fmtInt(billsP)}</span><span class="s">${delta==null?'in period':Math.round(delta*100)===0?`same as previous ${A.plen} days`:`${delta>0?'▲':'▼'} ${fmtInt(Math.abs(delta*100))}% vs previous ${A.plen} days`}</span></button>
     <button type="button" class="kpi" data-go="stock"><span class="l">Items sold</span><span class="v">${fmtInt(active)}</span><span class="s">different items in period</span></button>
   </div>
   ${issues.length?`<div class="panel"><div class="panel-h"><h3>Needs attention</h3></div><div class="alerts">${issues.map(alertHTML).join('')}</div></div>`:''}
-  <div class="panel"><div class="panel-h"><h3>Monthly entries</h3><p>Number of delivery challans (sales) and inward (purchase) entries made each month. A sudden drop on either side means entries may be missing.</p></div>
-    <div class="legend"><span><i style="background:var(--s-out)"></i>Outward entries</span><span><i style="background:var(--s-in)"></i>Inward entries</span></div>
-    <div class="chartbox"><canvas id="chMonthly" aria-label="Monthly sale bills and receipts"></canvas></div></div>
+  <div class="panel"><div class="panel-h"><h3>Monthly entries</h3><p>Number of delivery challans and inward entries made each month. A sudden drop on either side means entries may be missing.</p></div>
+    <div class="legend"><span><i style="background:var(--s-out)"></i>Delivery challans</span><span><i style="background:var(--s-in)"></i>Inward entries</span></div>
+    <div class="chartbox"><canvas id="chMonthly" aria-label="Monthly challans and inward entries"></canvas></div></div>
   <div class="grid2">
     <div class="panel"><div class="panel-h"><h3>Buy first</h3><button class="btn sm" type="button" data-go="buy">Full list</button><p>Most urgent items by days of stock left.</p></div>
       ${tableHTML('ov-buy',[{k:'urg',l:'Status',f:r=>urgPill(r.urg)},{k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:stockCls},{k:'cover',l:'Days left',n:1,f:r=>daysTxt(r.cover)},{k:'suggest',l:'Buy qty',n:1,f:r=>`<b>${fmtInt(r.suggest)}</b>`}],urg,{limit:10,empty:'Nothing needs buying right now.'})}</div>
-    <div class="panel"><div class="panel-h"><h3>Most selling in period</h3><button class="btn sm" type="button" data-go="top">Full list</button><p>Ranked by number of sale bills.</p></div>
-      ${tableHTML('ov-top',[{k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'billsP',l:'Bills',n:1,f:r=>`${fmtInt(r.billsP)}<span class="bar" style="width:${Math.round(r.billsP/maxB*60)}px"></span>`},{k:'outP',l:'Qty sold',n:1,f:r=>fmt(r.outP)},{k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:stockCls}],top,{limit:10,empty:'No sales in this period.'})}</div>
+    <div class="panel"><div class="panel-h"><h3>Most selling in period</h3><button class="btn sm" type="button" data-go="top">Full list</button><p>Ranked by number of challans.</p></div>
+      ${tableHTML('ov-top',[{k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'billsP',l:'Challans',n:1,f:r=>`${fmtInt(r.billsP)}<span class="bar" style="width:${Math.round(r.billsP/maxB*60)}px"></span>`},{k:'outP',l:'Qty sold',n:1,f:r=>fmt(r.outP)},{k:'close',l:'Stock',n:1,f:r=>fmt(r.close),cls:stockCls}],top,{limit:10,empty:'No sales in this period.'})}</div>
   </div>
   <div class="grid2">
-    <div class="panel"><div class="panel-h"><h3>ABC × FSN</h3><p>ABC by ${A.byValue?'sale value':'number of sale bills'} in the last 365 days (A = top 70%). FSN: Fast ${SET.fastBills}+ bills a year, Slow, Non-moving ${SET.nmDays}+ days. Click a cell to list the items.</p></div>
+    <div class="panel"><div class="panel-h"><h3>ABC × FSN</h3><p>ABC by ${A.byValue?'sale value':'number of challans'} in the last 365 days (A = top 70%). FSN: Fast ${SET.fastBills}+ bills a year, Slow, Non-moving ${SET.nmDays}+ days. Click a cell to list the items.</p></div>
       <div class="matrix"><div class="h"></div><div class="h">Fast</div><div class="h">Slow</div><div class="h">Non-moving</div>
       ${['A','B','C'].map(a=>`<div class="h">${a}</div>`+['F','S','N'].map(f=>`<button type="button" data-abc="${a}${f}">${fmtInt(mx[a+f])}</button>`).join('')).join('')}</div></div>
-    <div class="panel"><div class="panel-h"><h3>Categories</h3><button class="btn sm" type="button" data-go="cats">Details</button><p>Sale bills in period by item group.</p></div>
-      <div class="chartbox sm"><canvas id="chCats" aria-label="Sale bills by category"></canvas></div></div>
+    <div class="panel"><div class="panel-h"><h3>Categories</h3><button class="btn sm" type="button" data-go="cats">Details</button><p>Challans in period by item group.</p></div>
+      <div class="chartbox sm"><canvas id="chCats" aria-label="Challans by category"></canvas></div></div>
   </div>`;
 },
 buy(){
@@ -861,11 +875,11 @@ top(){
   if(f.tCat)rows=rows.filter(i=>i.cat===f.tCat);if(f.tQ)rows=rows.filter(i=>match(i.name,f.tQ));
   const key=by==='cust'?(r=>r.custP.size):(r=>r[by]);
   rows=[...rows].sort((a,b)=>key(b)-key(a));rows.forEach((r,i)=>r._rank=i+1);const tot=rows.reduce((s,r)=>s+key(r),0)||1;const mx=rows.length?key(rows[0]):1;
-  return `<div class="panel"><div class="panel-h"><h2>Most selling items</h2><p>${dstr(A.from)} to ${dstr(A.to)}. Quantities are in each item's own unit (pieces, kg), so compare quantity within one category; bill count works across all items. Change vs the previous ${A.plen} days.</p></div>
-  <div class="tool">${srch('tQ','Search item')}${catSel('tCat')}<label for="tBy">Rank by</label><select id="tBy"><option value="billsP" ${by==='billsP'?'selected':''}>Number of bills</option><option value="outP" ${by==='outP'?'selected':''}>Quantity sold</option><option value="cust" ${by==='cust'?'selected':''}>Number of customers</option></select>${expBtns('top')}</div>
+  return `<div class="panel"><div class="panel-h"><h2>Most selling items</h2><p>${dstr(A.from)} to ${dstr(A.to)}. Quantities are in each item's own unit (pieces, kg), so compare quantity within one category; the number of challans works across all items. Change vs the previous ${A.plen} days.</p></div>
+  <div class="tool">${srch('tQ','Search item')}${catSel('tCat')}<label for="tBy">Rank by</label><select id="tBy"><option value="billsP" ${by==='billsP'?'selected':''}>Number of challans</option><option value="outP" ${by==='outP'?'selected':''}>Quantity sold</option><option value="cust" ${by==='cust'?'selected':''}>Number of customers</option></select>${expBtns('top')}</div>
   ${tableHTML('top',[
     {k:'_rank',l:'#',n:1},{k:'name',l:'Item',item:1,f:r=>itemLink(r.name)},{k:'cat',l:'Category'},
-    {k:'billsP',l:'Bills',n:1,f:r=>fmtInt(r.billsP)+(by==='billsP'?`<span class="bar" style="width:${Math.round(r.billsP/mx*70)}px"></span>`:'')},
+    {k:'billsP',l:'Challans',n:1,f:r=>fmtInt(r.billsP)+(by==='billsP'?`<span class="bar" style="width:${Math.round(r.billsP/mx*70)}px"></span>`:'')},
     {k:'outP',l:'Qty sold',n:1,f:r=>fmt(r.outP)+(by==='outP'?`<span class="bar" style="width:${Math.round(r.outP/mx*70)}px"></span>`:'')},
     {k:'cust',l:'Customers',n:1,sv:r=>r.custP.size,f:r=>fmtInt(r.custP.size)+(by==='cust'?`<span class="bar" style="width:${Math.round(r.custP.size/mx*70)}px"></span>`:''),x:r=>r.custP.size},
     {k:'share',l:'Share',n:1,sv:r=>key(r)/tot,f:r=>fmt(key(r)/tot*100)+'%',x:r=>Math.round(key(r)/tot*1000)/10},
@@ -924,25 +938,26 @@ entries(){
     <div class="kpi"><span class="l">Inward qty</span><span class="v">${fmt(ti)}</span><span class="s">mixed units</span></div><div class="kpi"><span class="l">Outward qty</span><span class="v">${fmt(to)}</span><span class="s">mixed units</span></div></div>
   ${tableHTML('entries',[
     {k:'d',l:'Date',n:0,f:r=>dstr(r.d),x:r=>dstr(r.d)},{k:'t',l:'Type',f:r=>r.app?(r.adj?`<span class="pill flat">Adj ${r.t>0?'+':'−'} · App</span>`:r.t>0?'<span class="dir in">Inward</span>':'<span class="dir out">Delivery Challan</span>'):r.adj?`<span class="pill flat">Adj ${r.t>0?'+':'−'} · Journal</span>`:r.t>0?'<span class="dir in">In · Receipt</span>':'<span class="dir out">Out · Payment</span>',x:r=>r.adj?(r.t>0?'Adjustment in':'Adjustment out'):r.t>0?'Inward':'Outward'},
-    {k:'vno',l:'Vch No.',f:r=>`<span class="mono">${esc(r.vno)}</span>${r.app&&r.v&&r.v.id?` <button type="button" class="btn sm" data-editentry="${esc(r.v.id)}">Edit</button>`:''}${r.cond?' <span class="pill serious" title="Condensed export: item break-up missing">condensed</span>':''}`,x:r=>r.vno},
+    {k:'vno',l:'Vch No.',f:r=>`<span class="mono">${esc(r.vno)}</span>${r.cond?' <span class="pill serious" title="Condensed export: item break-up missing">condensed</span>':''}`,x:r=>r.vno},
     {k:'party',l:'Party',f:r=>esc(r.party)},{k:'item',l:'Item',item:1,f:r=>itemLink(r.item)},
-    {k:'qin',l:'In',n:1,sv:r=>r.t>0?r.q:0,f:r=>r.t>0?fmt(r.q):'',x:r=>r.t>0?r.q:''},{k:'qout',l:'Out',n:1,sv:r=>r.t<0?r.q:0,f:r=>r.t<0?fmt(r.q):'',x:r=>r.t<0?r.q:''}
-  ],rows,{sort:'d',dir:-1,limit:300,title:'Entries',foot:`<td colspan="5">Total</td><td class="n">${fmt(ti)}</td><td class="n">${fmt(to)}</td>`})}</div>`;
+    {k:'qin',l:'In',n:1,sv:r=>r.t>0?r.q:0,f:r=>r.t>0?fmt(r.q):'',x:r=>r.t>0?r.q:''},{k:'qout',l:'Out',n:1,sv:r=>r.t<0?r.q:0,f:r=>r.t<0?fmt(r.q):'',x:r=>r.t<0?r.q:''},
+    ...(isAdmin()?[{k:'_e',l:'',sv:r=>0,f:r=>r.app&&r.v&&r.v.id?`<span class="racts">${r.t<0&&!r.adj?`<button type="button" class="btn sm" data-printdc="${esc(r.v.id)}">Print</button>`:''}<button type="button" class="btn sm" data-editentry="${esc(r.v.id)}">Edit</button></span>`:'',x:r=>''}]:[])
+  ],rows,{sort:'d',dir:-1,limit:300,title:'Entries',foot:`<td colspan="5">Total</td><td class="n">${fmt(ti)}</td><td class="n">${fmt(to)}</td>${isAdmin()?'<td></td>':''}`})}</div>`;
 },
 parties(){
   const A=S.A,f=S.f;let c=A.cust.filter(p=>p.bills>0),s=A.sup.filter(p=>p.bills>0);
   if(f.pQ){c=c.filter(p=>match(p.name,f.pQ));s=s.filter(p=>match(p.name,f.pQ))}
   const quiet=A.cust.filter(p=>p.billsPrev180>=5&&p.billsLast60===0&&p.name!=='(NO NAME)'&&(!f.pQ||match(p.name,f.pQ)));
   return `<div class="tool">${srch('pQ','Search party')}</div>
-  <div class="panel"><div class="panel-h"><h2>Customers</h2><p>From Payment narrations, ${dstr(A.from)} to ${dstr(A.to)}. Trailing bill numbers are removed from names so each customer is grouped. Click a name to see its entries.</p>${expBtns('cust')}</div>
-  ${tableHTML('cust',[{k:'name',l:'Customer',f:r=>`<button type="button" class="il" data-party="${esc(r.name)}">${esc(r.name)}</button>`,x:r=>r.name},{k:'bills',l:'Bills',n:1},{k:'lines',l:'Item lines',n:1},{k:'items',l:'Different items',n:1,sv:r=>r.items.size,f:r=>fmtInt(r.items.size),x:r=>r.items.size},
-    {k:'last',l:'Last bill',n:1,f:r=>dstr(r.last),x:r=>dstr(r.last)},{k:'first',l:'First bill',n:1,f:r=>dstr(r.first),x:r=>dstr(r.first)},{k:'billsAll',l:'Bills (all time)',n:1}],c,{sort:'bills',dir:-1,limit:50,title:'Customers'})}</div>
+  <div class="panel"><div class="panel-h"><h2>Customers</h2><p>Delivery challans from ${dstr(A.from)} to ${dstr(A.to)}. Click a name to see its entries.</p>${expBtns('cust')}</div>
+  ${tableHTML('cust',[{k:'name',l:'Customer',f:r=>`<button type="button" class="il" data-party="${esc(r.name)}">${esc(r.name)}</button>`,x:r=>r.name},{k:'bills',l:'Challans',n:1},{k:'lines',l:'Item lines',n:1},{k:'items',l:'Different items',n:1,sv:r=>r.items.size,f:r=>fmtInt(r.items.size),x:r=>r.items.size},
+    {k:'last',l:'Last challan',n:1,f:r=>dstr(r.last),x:r=>dstr(r.last)},{k:'first',l:'First challan',n:1,f:r=>dstr(r.first),x:r=>dstr(r.first)},{k:'billsAll',l:'Challans (all time)',n:1}],c,{sort:'bills',dir:-1,limit:50,title:'Customers'})}</div>
   <div class="panel"><div class="panel-h"><h2>Customers gone quiet</h2><p>Bought 5 or more times in the 6 months before the last 60 days, but nothing in the last 60 days. Worth a call.</p>${expBtns('quiet')}</div>
-  ${tableHTML('quiet',[{k:'name',l:'Customer',f:r=>`<button type="button" class="il" data-party="${esc(r.name)}">${esc(r.name)}</button>`,x:r=>r.name},{k:'billsPrev180',l:'Bills earlier',n:1},{k:'last',l:'Last bill',n:1,f:r=>dstr(r.last),x:r=>dstr(r.last)},
-    {k:'gap',l:'Days since',n:1,sv:r=>A.to-r.last,f:r=>fmtInt(A.to-r.last),x:r=>A.to-r.last},{k:'billsAll',l:'Bills (all time)',n:1}],quiet,{sort:'billsPrev180',dir:-1,limit:50,title:'Customers gone quiet',empty:'No regular customer has gone quiet.'})}</div>
-  <div class="panel"><div class="panel-h"><h2>Suppliers</h2><p>From Receipt narrations in the period.</p>${expBtns('sup')}</div>
-  ${tableHTML('sup',[{k:'name',l:'Supplier',f:r=>`<button type="button" class="il" data-party="${esc(r.name)}">${esc(r.name)}</button>`,x:r=>r.name},{k:'bills',l:'Receipts',n:1},{k:'lines',l:'Item lines',n:1},{k:'items',l:'Different items',n:1,sv:r=>r.items.size,f:r=>fmtInt(r.items.size),x:r=>r.items.size},
-    {k:'last',l:'Last receipt',n:1,f:r=>dstr(r.last),x:r=>dstr(r.last)},{k:'billsAll',l:'Receipts (all time)',n:1}],s,{sort:'bills',dir:-1,limit:50,title:'Suppliers',empty:'No receipts in this period.'})}</div>`;
+  ${tableHTML('quiet',[{k:'name',l:'Customer',f:r=>`<button type="button" class="il" data-party="${esc(r.name)}">${esc(r.name)}</button>`,x:r=>r.name},{k:'billsPrev180',l:'Challans earlier',n:1},{k:'last',l:'Last challan',n:1,f:r=>dstr(r.last),x:r=>dstr(r.last)},
+    {k:'gap',l:'Days since',n:1,sv:r=>A.to-r.last,f:r=>fmtInt(A.to-r.last),x:r=>A.to-r.last},{k:'billsAll',l:'Challans (all time)',n:1}],quiet,{sort:'billsPrev180',dir:-1,limit:50,title:'Customers gone quiet',empty:'No regular customer has gone quiet.'})}</div>
+  <div class="panel"><div class="panel-h"><h2>Suppliers</h2><p>Inward entries from ${dstr(A.from)} to ${dstr(A.to)}. Click a name to see its entries.</p>${expBtns('sup')}</div>
+  ${tableHTML('sup',[{k:'name',l:'Supplier',f:r=>`<button type="button" class="il" data-party="${esc(r.name)}">${esc(r.name)}</button>`,x:r=>r.name},{k:'bills',l:'Inward entries',n:1},{k:'lines',l:'Item lines',n:1},{k:'items',l:'Different items',n:1,sv:r=>r.items.size,f:r=>fmtInt(r.items.size),x:r=>r.items.size},
+    {k:'last',l:'Last inward',n:1,f:r=>dstr(r.last),x:r=>dstr(r.last)},{k:'billsAll',l:'Inward entries (all time)',n:1}],s,{sort:'bills',dir:-1,limit:50,title:'Suppliers',empty:'No inward entries in this period.'})}</div>`;
 },
 cats(){
   const A=S.A;const m=new Map();
@@ -951,7 +966,7 @@ cats(){
   const rows=[...m.values()];const mx=Math.max(1,...rows.map(r=>r.bills));
   return `<div class="panel"><div class="panel-h"><h2>Categories</h2><p>Item groups come from the Category column of the Item Master (Masters → Items). Items with no category there are listed as “Not set”. Quantities mix units within a group only when the group does.</p>${expBtns('cats')}</div>
   ${tableHTML('cats',[{k:'cat',l:'Category',f:r=>`<button type="button" class="il" data-cat="${esc(r.cat)}">${esc(r.cat)}</button>`,x:r=>r.cat},{k:'n',l:'Items',n:1},{k:'sold',l:'Sold in period',n:1},
-    {k:'bills',l:'Sale bills',n:1,f:r=>fmtInt(r.bills)+`<span class="bar" style="width:${Math.round(r.bills/mx*60)}px"></span>`},{k:'inP',l:'Inward',n:1,f:r=>fmt(r.inP)},{k:'outP',l:'Outward',n:1,f:r=>fmt(r.outP)},
+    {k:'bills',l:'Challans',n:1,f:r=>fmtInt(r.bills)+`<span class="bar" style="width:${Math.round(r.bills/mx*60)}px"></span>`},{k:'inP',l:'Inward',n:1,f:r=>fmt(r.inP)},{k:'outP',l:'Outward',n:1,f:r=>fmt(r.outP)},
     {k:'close',l:'Closing',n:1,f:r=>fmt(r.close),cls:r=>r.close<0?'neg':''},{k:'buy',l:'Buy now',n:1},{k:'min',l:'Below MOQ',n:1},{k:'neg',l:'Negative',n:1},{k:'nm',l:'Non-moving',n:1}],rows,{sort:'bills',dir:-1,title:'Categories'})}</div>`;
 },
 health(){
@@ -973,9 +988,9 @@ settings(){
     ${fld('basisDays','Average sale based on last (days)','Window used for the average daily sale. 90 suits most items.')}
     <label for="set-moqBasis">Automatic MOQ based on<select id="set-moqBasis" data-set="moqBasis"><option value="ly" ${SET.moqBasis!=='recent'?'selected':''}>Same months last year</option><option value="recent" ${SET.moqBasis==='recent'?'selected':''}>Latest months</option></select><span>Used when the Item Master has no MOQ for an item. MOQ = average monthly sale.</span></label>
     ${fld('moqMonths','Months to average for MOQ','3 = average of 3 months.')}
-    ${fld('minBills','Minimum sale bills to suggest buying','Items sold fewer times than this in the sales window are not suggested.')}
+    ${fld('minBills','Minimum challans to suggest buying','Items sold fewer times than this in the sales window are not suggested.')}
     ${fld('nmDays','Non-moving after (days without sale)','Also the "N" in FSN.')}
-    ${fld('fastBills','Fast moving from (sale bills a year)','24 means about two bills a month.')}
+    ${fld('fastBills','Fast moving from (challans a year)','24 means about two challans a month.')}
     ${fld('excessDays','Excess stock above (days of stock)','Stock covering more days than this is listed as excess.')}
   </div>
   <label for="set-exclude" style="display:grid;gap:4px;margin-top:14px;font-size:13px">Ledgers to leave out (not stock items), separated by |<textarea id="set-exclude" data-set="exclude">${esc(SET.exclude)}</textarea></label>
@@ -985,13 +1000,14 @@ settings(){
 /* ============================== Masters (Google Sheet tabs) ============================== */
 const MKIND={mItems:{key:'Items',one:'item',name:'Item Name'},mCust:{key:'Customers',one:'customer',name:'Customer Name'},mVend:{key:'Vendors',one:'vendor',name:'Vendor Name'},mEnt:{key:'Entities',one:'entity',name:'Entity Name'}};
 S.masters=null;S.mDel=null;
+function mrowsSafe(key){return (S.masters&&S.masters[key]&&S.masters[key].rows)||[]}
 function sheetItemMaster(){
   const out={},m=S.masters&&S.masters.Items;if(!m)return out;
   const col=re=>m.headers.find(h=>re.test(h));
   const c={name:col(/^item/i),cat:col(/categ|group/i),unit:col(/^unit|uom/i),min:col(/^moq$|^min/i),max:col(/^max/i),lead:col(/lead/i),rate:col(/rate|price|cost/i),merge:col(/merge|alias/i),status:col(/^status$/i)};
   const v=(r,k)=>c[k]?r[c[k]]:'';
   for(const r of m.rows){const name=cleanName(v(r,'name'));if(!name)continue;
-    out[name]={name,cat:cleanName(v(r,'cat')).toUpperCase()||null,unit:cleanName(v(r,'unit'))||null,min:toNum(v(r,'min')),max:toNum(v(r,'max')),lead:toNum(v(r,'lead')),rate:toNum(v(r,'rate')),
+    out[name]={name,cat:cleanName(v(r,'cat'))||null,unit:cleanName(v(r,'unit'))||null,min:toNum(v(r,'min')),max:toNum(v(r,'max')),lead:toNum(v(r,'lead')),rate:toNum(v(r,'rate')),
       merge:cleanName(v(r,'merge'))||null,exclude:/^exclude/i.test(String(v(r,'status')))}}
   return out;
 }
@@ -999,7 +1015,7 @@ function masterNames(tab,activeOnly){const K=MKIND[tab],m=S.masters&&S.masters[K
   return m.rows.filter(r=>!activeOnly||!/^(inactive|exclude)/i.test(String(r.Status||''))).map(r=>cleanName(r[K.name])).filter(Boolean)}
 function masterCandidates(tab){
   if(tab==='mEnt'||!S.A)return [];
-  const have=new Set(masterNames(tab).map(n=>n.toUpperCase()));const skip=/^\(NO NAME\)$|^CASH$|^CSH$|^JOURNAL ADJUSTMENT$|^STOCK ADJUSTMENT$/;
+  const have=new Set(masterNames(tab).map(n=>n.toUpperCase()));const skip=/^\(NO NAME\)$|^CASH$|^CSH$|^JOURNAL ADJUSTMENT$|^STOCK ADJUSTMENT$/i;
   if(tab==='mItems')return S.A.items.filter(i=>!have.has(i.name.toUpperCase())).sort((a,b)=>a.name.localeCompare(b.name)).map(i=>({'Item Name':i.name,Category:i.cat===NO_CAT?'':i.cat,Unit:i.unit||'',Status:'Active'}));
   const src=tab==='mCust'?S.A.cust:S.A.sup;
   return src.filter(p=>!skip.test(p.name)&&!have.has(p.name.toUpperCase())).sort((a,b)=>b.billsAll-a.billsAll).map(p=>({[MKIND[tab].name]:p.name}));
@@ -1233,8 +1249,9 @@ function entryView(){
   const ET=isAdmin()?ETYPES:{IN:ETYPES.IN,OUT:ETYPES.OUT},isDC=D.type==='OUT',C=D.dc;
   if(isDC&&!C.no&&!S.editId)C.no=nextDcNo();
   {const en=entityNames();if(isDC&&!C.entity&&en.length===1)C.entity=en[0]}
-  const items=[...new Set([...S.A.items.map(i=>i.name),...masterNames('mItems',true)])].sort();
-  const parties=[...new Set([...masterNames(isDC?'mCust':'mVend'),...(isDC?S.A.cust:S.A.sup).map(p=>p.name).filter(n=>n!=='(NO NAME)')])].sort();
+  const uniq=a=>{const m=new Map();a.forEach(n=>{const k=cleanName(n).toUpperCase();if(k&&!m.has(k))m.set(k,cleanName(n))});return [...m.values()].sort((x,y)=>x.localeCompare(y))};
+  const items=uniq([...masterNames('mItems',true),...S.A.items.map(i=>i.name)]);
+  const parties=uniq([...masterNames(isDC?'mCust':'mVend'),...(isDC?S.A.cust:S.A.sup).map(p=>p.name).filter(n=>n!=='(NO NAME)')]);
   const ents=entityNames();
   const qtyPh=D.type==='ADJ'?(D.mode==='set'?'Counted':'+ / − qty'):'Qty';
   const lineRow=(l,i)=>isDC?`<div class="eline dc" data-i="${i}">
@@ -1279,9 +1296,8 @@ function entryView(){
     :`<div class="egrid">
       ${label('enDate','Date',`<input type="date" id="enDate" value="${D.date}" max="${iso(today())}" required>`)}
       ${D.type==='ADJ'?label('enMode','How to adjust',`<select id="enMode"><option value="delta" ${D.mode!=='set'?'selected':''}>Add or remove a quantity</option><option value="set" ${D.mode==='set'?'selected':''}>Set stock to a counted figure</option></select>`)
-        :label('enParty','Supplier',`<span class="withadd"><input type="text" id="enParty" list="dlParty" value="${esc(D.party)}" autocomplete="off" placeholder="Name"><button type="button" class="btn addnew" data-quick="mVend" data-qf="party" title="Add a new supplier to the master" aria-label="Add a new supplier">+ New</button></span>`)+label('enBill','Bill / challan no.',`<input type="text" id="enBill" value="${esc(D.bill)}" autocomplete="off" placeholder="Optional">`)}
-      ${label('enBy','Entered by',`<input type="text" id="enBy" value="${esc(S.user?S.user.name||S.user.username:'')}" readonly tabindex="-1" class="ro">`)}
-    </div>`}
+        :label('enParty','Supplier',`<span class="withadd"><input type="text" id="enParty" list="dlParty" value="${esc(D.party)}" autocomplete="off" placeholder="Start typing to pick a supplier"><button type="button" class="btn addnew" data-quick="mVend" data-qf="party" title="Add a new supplier to the master" aria-label="Add a new supplier">+ New</button></span>`,'span2')+label('enBill','Bill / challan no.',`<input type="text" id="enBill" value="${esc(D.bill)}" autocomplete="off" placeholder="Optional">`)}
+    </div><p class="hint" style="margin:-4px 0 14px">Entered by <b>${esc(S.user?S.user.name||S.user.username:'')}</b>.</p>`}
     ${warnTally?`<p class="enote">This date is inside the Tally data (up to ${dstr(S.base.tallyEnd)}). Save it only if this entry is not already in Tally, otherwise it will be counted twice.</p>`:''}
     ${D.type==='ADJ'?`<p class="hint">${D.mode==='set'?'Enter the stock you counted. The difference from the stock on that date is saved as the adjustment.':'Enter a positive number to add stock and a negative number (for example −5) to remove it.'}</p>`:''}
     <fieldset class="fs"><legend>Goods</legend>
@@ -1341,6 +1357,7 @@ function refreshHints(){
     const c=$('#dcCharges');if(c)c.placeholder=T.mt!=null&&num(D.dc.rate)!=null?trimNum(T.mt*num(D.dc.rate)):''}
 }
 function entryChanged(el){
+  if(S.blurring)return; // the page is being redrawn; every keystroke was already saved to the draft
   readForm();const D=S.draft;
   if(el.id==='enMode'||el.id==='enDate'){S.entryErr='';rerenderEntry();return}
   if(D.type==='OUT'&&el.id==='enParty'){const c=customerInfo(D.party);if(c){D.dc.address=c.address||D.dc.address;D.dc.mobile=c.mobile||D.dc.mobile;D.dc.email=c.email||D.dc.email;rerenderEntry();return}}
@@ -1349,7 +1366,15 @@ function entryChanged(el){
   refreshHints();
 }
 document.addEventListener('input',e=>{const el=e.target;if(el.closest&&el.closest('#entryForm')){readForm();refreshHints()}},true);
-function rerenderEntry(){const y=window.scrollY;render();window.scrollTo(0,y)}
+function rerenderEntry(){
+  // keep the cursor where it was: same field id, or same column on the same goods line
+  const ae=document.activeElement,ln=ae&&ae.closest&&ae.closest('.eline');
+  const key=ae&&ae.id?'#'+ae.id:ln&&ae.className?`.eline[data-i="${ln.dataset.i}"] .${String(ae.className).split(' ')[0]}`:null;
+  const y=window.scrollY;S.inRender=true;
+  try{render();window.scrollTo(0,y);
+    if(key){const n=document.querySelector('#entryForm '+key);if(n&&n.focus){n.focus({preventScroll:true});try{if(n.setSelectionRange&&n.type==='text')n.setSelectionRange(n.value.length,n.value.length)}catch(e){}}}
+  }finally{S.inRender=false}
+}
 function entryClick(t){
   if(t.dataset.etype){if(t.dataset.etype==='ADJ'&&!isAdmin())return true;readForm();if(S.draft.type!==t.dataset.etype){const C=S.draft.dc;S.draft.type=t.dataset.etype;S.draft.party='';S.draft.bill='';C.address=C.mobile=C.email=C.ref='';S.entryErr=''}rerenderEntry();return true}
   if(t.dataset.addline){readForm();S.draft.lines.push(newLine());rerenderEntry();const ins=document.querySelectorAll('#enLines .enItem');if(ins.length)ins[ins.length-1].focus();return true}
@@ -1428,8 +1453,8 @@ function usersView(){
   if(!S.users)return `<div class="panel"><p class="lede">Users could not be loaded.</p></div>`;
   const U=S.users,act=U.filter(u=>/^active$/i.test(u.status));
   const kp=(l,v,s)=>`<div class="kpi"><span class="l">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
-  return `<div class="kpis">${kp('Active users',fmtInt(act.length),'can sign in')}${kp('Admins',fmtInt(act.filter(u=>u.role==='Admin').length),'full access')}${kp('Warehouse managers',fmtInt(act.filter(u=>u.role==='Warehouse Manager').length),'Inward and Outward entries only')}</div>
-  <div class="panel"><div class="panel-h"><h2>Users</h2><p>Who can sign in, and what they can do. <b>Admin</b>: everything. <b>Warehouse Manager</b>: New Entry (Inward and Outward only) and the Entries list; cannot edit or delete entries. Saved in the Google Sheet tab "Users"; passwords are stored scrambled, never as plain text.</p>
+  return `<div class="kpis">${kp('Active users',fmtInt(act.length),'can sign in')}${kp('Admins',fmtInt(act.filter(u=>u.role==='Admin').length),'full access')}${kp('Warehouse managers',fmtInt(act.filter(u=>u.role==='Warehouse Manager').length),'Inward and Delivery challans only')}</div>
+  <div class="panel"><div class="panel-h"><h2>Users</h2><p>Who can sign in, and what they can do. <b>Admin</b>: everything. <b>Warehouse Manager</b>: New Entry (Inward and Delivery Challan only) and the Entries list; can add new items, customers, suppliers and entities from the entry form, but cannot edit or delete anything. Saved in the Google Sheet tab "Users"; passwords are stored scrambled, never as plain text.</p>
     <div><button class="btn pri" type="button" data-act="userNew">+ Add user</button></div></div>
   ${tableHTML('users',[
     {k:'name',l:'Name'},{k:'username',l:'Username',f:r=>`<span class="mono">${esc(r.username)}</span>`,x:r=>r.username},
@@ -1484,9 +1509,11 @@ function chartDefaults(){if(!window.Chart)return;Chart.defaults.font.family=css(
 function killCharts(){for(const k in S.charts){try{S.charts[k].destroy()}catch(e){}}S.charts={}}
 function render(){
   if(S.user&&!allowedTab(S.tab))S.tab=homeTab();
+  // let a focused field finish its change handler before the page is replaced (it may redraw itself)
+  {const ae=document.activeElement,mn=$('#main');if(ae&&mn&&mn.contains(ae)&&!S.blurring){S.blurring=true;try{ae.blur()}finally{S.blurring=false}}}
   killCharts();renderTabs();
   const main=$('#main');
-  {const pb=document.querySelector('.pright');if(pb)pb.hidden=!!S.locked}
+  {const pb=document.querySelector('.pright');if(pb)pb.hidden=!!S.locked||!PERIOD_TABS.includes(S.tab)}
   if(S.locked){$('#pageTitle').textContent=(!auth.get()||S.needLogin)?'Sign in':'Opening';$('#pageGroup').textContent='';const lu=$('#lgUser'),lp=$('#lgPw'),u=lu?lu.value:'',pw=lp&&!S.clearPw?lp.value:'';S.clearPw=false;main.innerHTML=connectPanel();if(u&&$('#lgUser'))$('#lgUser').value=u;if(pw&&$('#lgPw'))$('#lgPw').value=pw;return}
   if(!S.A){main.innerHTML=loadPanel(true);bindDrop();return}
   S.exp={};
@@ -1587,13 +1614,13 @@ function drawOverviewCharts(){
   const ms=A.months.filter(m=>m.k<=ym(A.to)).slice(-24);
   const grid={color:css('--line')},tick={color:css('--fg-3')};
   const c1=$('#chMonthly');if(c1)S.charts.m=new Chart(c1,{type:'bar',data:{labels:ms.map(m=>ymLabel(m.k)),datasets:[
-      {label:'Sale bills',data:ms.map(m=>m.sale),backgroundColor:css('--s-out'),borderRadius:{topLeft:4,topRight:4},maxBarThickness:18,borderSkipped:'bottom'},
-      {label:'Receipts',data:ms.map(m=>m.rec),backgroundColor:css('--s-in'),borderRadius:{topLeft:4,topRight:4},maxBarThickness:18,borderSkipped:'bottom'}]},
+      {label:'Challans',data:ms.map(m=>m.sale),backgroundColor:css('--s-out'),borderRadius:{topLeft:4,topRight:4},maxBarThickness:18,borderSkipped:'bottom'},
+      {label:'Inward entries',data:ms.map(m=>m.rec),backgroundColor:css('--s-in'),borderRadius:{topLeft:4,topRight:4},maxBarThickness:18,borderSkipped:'bottom'}]},
     options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{footer:it=>{const m=ms[it[0].dataIndex];return m.cond?`${m.cond} condensed bills`:''}}}},
       scales:{x:{grid:{display:false},ticks:tick},y:{beginAtZero:true,grid,ticks:{...tick,precision:0},border:{display:false}}}}});
   const cm=new Map();A.items.forEach(i=>cm.set(i.cat,(cm.get(i.cat)||0)+i.billsP));
   let cs=[...cm.entries()].filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);if(cs.length>9){const rest=cs.slice(8).reduce((s,x)=>s+x[1],0);cs=cs.slice(0,8).concat([['Other groups',rest]])}
-  const c2=$('#chCats');if(c2)S.charts.c=new Chart(c2,{type:'bar',data:{labels:cs.map(x=>x[0]),datasets:[{label:'Sale bills',data:cs.map(x=>x[1]),backgroundColor:css('--s-out'),borderRadius:{topRight:4,bottomRight:4},borderSkipped:'left',maxBarThickness:16}]},
+  const c2=$('#chCats');if(c2)S.charts.c=new Chart(c2,{type:'bar',data:{labels:cs.map(x=>x[0]),datasets:[{label:'Challans',data:cs.map(x=>x[1]),backgroundColor:css('--s-out'),borderRadius:{topRight:4,bottomRight:4},borderSkipped:'left',maxBarThickness:16}]},
     options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid,ticks:tick,border:{display:false}},y:{grid:{display:false},ticks:{color:css('--fg-2')}}}}});
 }
 
@@ -1618,8 +1645,8 @@ function openItem(name){
     <div class="panel"><div class="panel-h"><h3>Stock at month end</h3><p>${m.fromTB?`Starts from the Trial Balance balance ${fmt(m.phys)} as on ${dstr(m.cdate)}.`:m.phys!=null?`Anchored to physical stock ${fmt(m.phys)} on ${dstr(m.cdate)}.`:m.open!=null?`Starts from opening stock ${fmt(m.open)}.`:'No opening stock given, so it starts from zero.'}</p></div><div class="chartbox sm"><canvas id="chBal"></canvas></div></div>
    </div>
    <div class="grid2">
-    <div class="panel"><div class="panel-h"><h3>Customers in period</h3></div>${tableHTML('it-c',[{k:'name',l:'Customer'},{k:'n',l:'Bills',n:1},{k:'q',l:'Qty',n:1,f:r=>fmt(r.q)}],[...cust.values()],{sort:'q',dir:-1,limit:10,empty:'No sales in this period.'})}</div>
-    <div class="panel"><div class="panel-h"><h3>Suppliers in period</h3></div>${tableHTML('it-s',[{k:'name',l:'Supplier'},{k:'n',l:'Receipts',n:1},{k:'q',l:'Qty',n:1,f:r=>fmt(r.q)}],[...sup.values()],{sort:'q',dir:-1,limit:10,empty:'No receipts in this period.'})}</div>
+    <div class="panel"><div class="panel-h"><h3>Customers in period</h3></div>${tableHTML('it-c',[{k:'name',l:'Customer'},{k:'n',l:'Challans',n:1},{k:'q',l:'Qty',n:1,f:r=>fmt(r.q)}],[...cust.values()],{sort:'q',dir:-1,limit:10,empty:'No sales in this period.'})}</div>
+    <div class="panel"><div class="panel-h"><h3>Suppliers in period</h3></div>${tableHTML('it-s',[{k:'name',l:'Supplier'},{k:'n',l:'Inward entries',n:1},{k:'q',l:'Qty',n:1,f:r=>fmt(r.q)}],[...sup.values()],{sort:'q',dir:-1,limit:10,empty:'No inward entries in this period.'})}</div>
    </div>
    <div class="panel"><div class="panel-h"><h3>Ledger</h3><p>Every entry up to ${dstr(A.to)}, newest first, with running stock.</p>${expBtns('it-l')}</div>
    ${tableHTML('it-l',[{k:'d',l:'Date',f:r=>dstr(r.d),x:r=>dstr(r.d)},{k:'vno',l:'Vch No.',f:r=>`<span class="mono">${esc(r.vno)}</span>`,x:r=>r.vno},{k:'party',l:'Party'},
@@ -1719,6 +1746,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.copy){doCopy(t.dataset.copy);return}
   if(t.dataset.xlsx){doXlsx(t.dataset.xlsx);return}
   if(t.dataset.editentry){startEdit(t.dataset.editentry);return}
+  if(t.dataset.printdc){printDC(t.dataset.printdc);return}
   if(t.dataset.party){closeDlg();S.f.eP=t.dataset.party;S.f.eQ='';S.f.eV='';saveF();go('entries');return}
   if(t.dataset.cat){S.f.sCat=t.dataset.cat;saveF();go('stock');return}
   if(t.dataset.abc){const [a,f]=t.dataset.abc.split('');S.f.sAbc=a;S.f.sFsn=f;S.f.sCat='';S.f.sQ='';saveF();go('stock');return}
@@ -1762,5 +1790,6 @@ new MutationObserver(()=>render()).observe(document.documentElement,{attributes:
 </script>
 <script src="js/docs.js"></script>
 <script src="js/challan.js"></script>
+<script src="js/combo.js"></script>
 <!--PAGE-END-->
 </html>
