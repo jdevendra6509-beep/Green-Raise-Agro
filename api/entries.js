@@ -157,7 +157,8 @@ module.exports = async (req, res) => {
         const u = j.users.find(x => String(x.username).toLowerCase() === me.u.toLowerCase());
         if (!u || !checkPassword(String(body.oldPassword || ''), u.hash)) { await sleep(700); return send(400, { ok: false, error: 'Your current password is not right.' }); }
         payload = { action: 'userSave', user: { username: u.username, hash: hashPassword(body.newPassword) } };
-      } else if (!admin) {
+      } else if (!admin && !(body.action === 'masterSave' && body.record && typeof body.record === 'object' && !body.record.ID)) {
+        // Warehouse Managers may add a new item, customer, vendor or entity from the entry form, but not edit or delete one
         return deny();
       } else if (body.action === 'userSave' || body.action === 'userDelete') {
         const u = body.user || {};

@@ -40,6 +40,7 @@ How it connects: the page calls `/api/entries` on Vercel (`api/entries.js`). Tha
 Choosing **Delivery Challan** on New Entry records goods going out and prints the challan.
 
 - **Challan details:** Dispatch from (entity), DC no., date, customer name, address, mobile, email, reference, and for each item the HSN code, packing (e.g. `10 kg`), quantity, unit (e.g. `Box`) and total (worked out from packing × qty, e.g. 5 Box × 10 kg = 50 kg; type over it if needed). Transport: vehicle no., transporter, charges per MT, and the transport total (worked out from the total weight; type over it if needed).
+- **Add new from the form:** "+ New" next to Entity, Customer and Supplier, and "+ New item" under the goods, open the master form right on the entry page; the name you typed is filled in, and after saving it is selected in the entry. Warehouse Managers can add new records this way but cannot edit or delete existing ones.
 - **Autofill:** picking a customer fills address, mobile and email from the Customer master; picking an item fills HSN, packing and unit from the Item master.
 - **DC numbers:** the next number is suggested (highest used + 1). For the very first challan, type the number your pad has reached. A number already used on another challan is refused.
 - **Entity:** the entities are kept on Masters → Entities. The entity is only recorded on the challan; it never changes stock.

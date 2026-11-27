@@ -331,6 +331,9 @@ dialog::backdrop{background:rgb(10 16 10 / .5);backdrop-filter:blur(2px)}
 .eline .enHint:empty{display:none}
 .eline.dc{grid-template-columns:26px minmax(0,2.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,.9fr) minmax(0,1fr) var(--ctl)}
 .elines.dc .eline:not(:first-child) label>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.withadd{display:flex;gap:6px;min-width:0}.withadd>:first-child{flex:1;min-width:0}
+.btn.addnew{height:var(--ctl);padding:0 12px;flex:none;color:var(--accent-ink);border-color:var(--line-2)}
+.btn.addnew:hover{border-color:var(--accent);background:var(--accent-soft)}
 .lfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .dctot{font-size:13.5px;color:var(--fg-2)}.dctot b{font-family:var(--f-display);font-size:16px;color:var(--fg)}
 .eerr{background:var(--crit-bg);padding:9px 12px;border-radius:8px;margin:12px 0 0}
@@ -1027,16 +1030,17 @@ function masterView(tab){
   ${tableHTML('m-'+tab,tc,rows,{sort:cols[0],dir:1,title:K.key+' master',empty:m.rows.length?'No match for this search.':`No ${K.key.toLowerCase()} yet. Add one, or add the ${tab==='mItems'?'items':'names'} used in entries.`})}</div>`;
 }
 function openDlg(title,html){$('#dlgTitle').textContent=title;$('#dlgBody').innerHTML=html;const d=$('#dlg');if(!d.open){try{d.showModal()}catch(e){d.setAttribute('open','')}}}
-function masterForm(tab,id){
+function masterForm(tab,id,prefill){
   const K=MKIND[tab],m=S.masters[K.key];const r=id?m.rows.find(x=>String(x.ID)===String(id)):null;S.mDel=null;
   const cols=m.headers.filter(h=>h!=='ID');const cats=tab==='mItems'?[...new Set(S.A.items.map(i=>i.cat))].filter(c=>c!==NO_CAT).sort():[];
   openDlg(r?`Edit ${K.one}`:`New ${K.one}`,`<form id="masterForm" class="panel" data-tab="${tab}" data-id="${esc(id||'')}" novalidate>
-    <div class="egrid">${cols.map((h,i)=>`<label>${esc(h)}${i===0?' *':''}<input type="text" data-col="${esc(h)}" value="${esc(r?r[h]??'':'')}" ${/categ/i.test(h)&&cats.length?'list="dlCats"':''}${/^status$/i.test(h)?'list="dlStatus"':''} autocomplete="off"></label>`).join('')}</div>
+    <div class="egrid">${cols.map((h,i)=>`<label>${esc(h)}${i===0?' *':''}<input type="text" data-col="${esc(h)}" value="${esc(r?r[h]??'':i===0&&prefill?prefill:'')}" ${/categ/i.test(h)&&cats.length?'list="dlCats"':''}${/^status$/i.test(h)?'list="dlStatus"':''} autocomplete="off"></label>`).join('')}</div>
     <datalist id="dlCats">${cats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist><datalist id="dlStatus"><option value="Active"><option value="Inactive"><option value="Exclude"></datalist>
     <p class="eerr" id="mErr" hidden></p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn pri" type="submit" id="mSave">Save</button>
       ${r?`<button class="btn" type="button" data-mact="del" data-tab="${tab}" data-id="${esc(id)}">Delete</button>`:''}</div></form>`);
   const f=$('#masterForm input');if(f)f.focus();
+  if(!id&&!(S.quick&&S.quick.tab===tab))S.quick=null;
 }
 async function saveMaster(){
   const f=$('#masterForm');const tab=f.dataset.tab,id=f.dataset.id,K=MKIND[tab];const rec={};
@@ -1047,7 +1051,14 @@ async function saveMaster(){
   if(dup)return err(`${rec[first]} is already in the master.`);
   for(const k in rec){const n=toNum(rec[k]);if(n!=null&&/^(moq|max|lead|rate|credit)/i.test(k))rec[k]=n}
   if(id)rec.ID=id;const b=$('#mSave');b.disabled=true;b.textContent='Saving…';
-  try{await api('POST',{action:'masterSave',master:K.key,record:rec});closeDlg();toast('Saved to the Google Sheet');await loadApp()}
+  try{await api('POST',{action:'masterSave',master:K.key,record:rec});closeDlg();toast('Saved to the Google Sheet');
+    const q=S.quick;S.quick=null;
+    if(q&&!id&&q.tab===tab&&S.draft){const D=S.draft,name=cleanName(rec[first]);
+      if(q.field==='entity')D.dc.entity=name;
+      if(q.field==='party'){D.party=name;if(tab==='mCust'){D.dc.address=[rec.Address,rec.City].filter(Boolean).join(', ')||D.dc.address;D.dc.mobile=rec.Phone||rec.Mobile||D.dc.mobile;D.dc.email=rec.Email||D.dc.email}}
+      if(q.field==='item'){let l=D.lines.find(l=>cleanName(l.item).toUpperCase()===name.toUpperCase())||D.lines.find(l=>!cleanName(l.item));if(!l){l=newLine();D.lines.push(l)}
+        l.item=name;if(!l.hsn)l.hsn=rec.HSN||'';if(!l.unit)l.unit=rec.Unit||'';if(!l.pack)l.pack=rec.Packing||''}}
+    await loadApp()}
   catch(e){b.disabled=false;b.textContent='Save';err('Not saved: '+e.message)}
 }
 async function masterClick(t){
@@ -1213,7 +1224,7 @@ function dcTotals(lines){
     if(t){sameU.add(t.unit);sum+=t.n}}
   const u=units.size===1?[...units][0]:'';
   const total=!any?'':sameU.size===1?trimNum(sum)+' '+[...sameU][0]:kgOk&&kg?trimNum(kg)+' kg':'';
-  return {qty:any?trimNum(qty)+(u?' '+u.replace(/^\w/,c=>c.toUpperCase()):''):'',total,mt:kgOk&&kg?kg/1000:null};
+  return {qty:any&&qty>0?trimNum(qty)+(u?' '+u.replace(/^\w/,c=>c.toUpperCase()):''):'',total,mt:kgOk&&kg?kg/1000:null};
 }
 function entryView(){
   if(S.source!=='hosted')return `<div class="panel"><h2>New Entry</h2><p class="lede">Entries are saved to the Google Sheet through the live site. Open the live site (not files loaded from this device) to add entries.</p></div>`;
@@ -1221,6 +1232,7 @@ function entryView(){
   const D=S.draft||(S.draft=newDraft());if(!isAdmin()&&D.type==='ADJ')D.type='IN';
   const ET=isAdmin()?ETYPES:{IN:ETYPES.IN,OUT:ETYPES.OUT},isDC=D.type==='OUT',C=D.dc;
   if(isDC&&!C.no&&!S.editId)C.no=nextDcNo();
+  {const en=entityNames();if(isDC&&!C.entity&&en.length===1)C.entity=en[0]}
   const items=[...new Set([...S.A.items.map(i=>i.name),...masterNames('mItems',true)])].sort();
   const parties=[...new Set([...masterNames(isDC?'mCust':'mVend'),...(isDC?S.A.cust:S.A.sup).map(p=>p.name).filter(n=>n!=='(NO NAME)')])].sort();
   const ents=entityNames();
@@ -1252,14 +1264,13 @@ function entryView(){
     ${S.editId?`<p class="enote"><b>Editing an entry.</b> Saving replaces it. The old version stays in the Google Sheet marked Deleted. <button type="button" class="btn sm" data-canceledit="1">Cancel edit</button></p>`:''}
     <div class="seg n${Object.keys(ET).length}" role="radiogroup" aria-label="Entry type">${Object.entries(ET).map(([k,v])=>`<button type="button" role="radio" aria-checked="${D.type===k}" data-etype="${k}" class="${D.type===k?'on':''}">${ticon(k)}<span class="t"><b>${v.l}</b><small>${v.h}</small></span></button>`).join('')}</div>
     ${isDC?`<fieldset class="fs"><legend>Challan</legend><div class="egrid">
-      ${label('dcEntity','Dispatch from (entity)',`<select id="dcEntity"><option value="">${ents.length?'Choose entity':'No entities yet'}</option>${ents.map(n=>`<option ${C.entity===n?'selected':''}>${esc(n)}</option>`).join('')}${C.entity&&!ents.includes(C.entity)?`<option selected>${esc(C.entity)}</option>`:''}</select>`)}
+      ${label('dcEntity','Dispatch from (entity)',`<span class="withadd"><select id="dcEntity"><option value="">${ents.length?'Choose entity':'No entities yet – add one'}</option>${ents.map(n=>`<option ${C.entity===n?'selected':''}>${esc(n)}</option>`).join('')}${C.entity&&!ents.includes(C.entity)?`<option selected>${esc(C.entity)}</option>`:''}</select><button type="button" class="btn addnew" data-quick="mEnt" data-qf="entity" title="Add a new entity to the master" aria-label="Add a new entity">+ New</button></span>`,'span2')}
       ${label('dcNo','DC no.',`<input type="text" id="dcNo" value="${esc(C.no)}" inputmode="numeric" autocomplete="off" placeholder="e.g. 366">`)}
       ${label('enDate','Date',`<input type="date" id="enDate" value="${D.date}" max="${iso(today())}" required>`)}
-      ${label('enBy','Entered by',`<input type="text" id="enBy" value="${esc(S.user?S.user.name||S.user.username:'')}" readonly tabindex="-1" class="ro">`)}
     </div>
-    <p class="hint">The entity is only recorded on the challan. It does not change stock.${!ents.length&&isAdmin()?' Add entities in Masters → Entities.':''}</p></fieldset>
+    <p class="hint">The entity is only recorded on the challan. It does not change stock. Entered by <b>${esc(S.user?S.user.name||S.user.username:'')}</b>.</p></fieldset>
     <fieldset class="fs"><legend>Customer</legend><div class="egrid">
-      ${label('enParty','Customer name',`<input type="text" id="enParty" list="dlParty" value="${esc(D.party)}" autocomplete="off" placeholder="Start typing to pick from the customer master">`,'span2')}
+      ${label('enParty','Customer name',`<span class="withadd"><input type="text" id="enParty" list="dlParty" value="${esc(D.party)}" autocomplete="off" placeholder="Start typing to pick from the customer master"><button type="button" class="btn addnew" data-quick="mCust" data-qf="party" title="Add a new customer to the master" aria-label="Add a new customer">+ New</button></span>`,'span2')}
       ${label('dcMobile','Mobile no.',`<input type="tel" id="dcMobile" value="${esc(C.mobile)}" autocomplete="off">`)}
       ${label('dcEmail','Email ID',`<input type="email" id="dcEmail" value="${esc(C.email)}" autocomplete="off">`)}
       ${label('dcAddress','Address',`<input type="text" id="dcAddress" value="${esc(C.address)}" autocomplete="off">`,'span2')}
@@ -1268,14 +1279,14 @@ function entryView(){
     :`<div class="egrid">
       ${label('enDate','Date',`<input type="date" id="enDate" value="${D.date}" max="${iso(today())}" required>`)}
       ${D.type==='ADJ'?label('enMode','How to adjust',`<select id="enMode"><option value="delta" ${D.mode!=='set'?'selected':''}>Add or remove a quantity</option><option value="set" ${D.mode==='set'?'selected':''}>Set stock to a counted figure</option></select>`)
-        :label('enParty','Supplier',`<input type="text" id="enParty" list="dlParty" value="${esc(D.party)}" autocomplete="off" placeholder="Name">`)+label('enBill','Bill / challan no.',`<input type="text" id="enBill" value="${esc(D.bill)}" autocomplete="off" placeholder="Optional">`)}
+        :label('enParty','Supplier',`<span class="withadd"><input type="text" id="enParty" list="dlParty" value="${esc(D.party)}" autocomplete="off" placeholder="Name"><button type="button" class="btn addnew" data-quick="mVend" data-qf="party" title="Add a new supplier to the master" aria-label="Add a new supplier">+ New</button></span>`)+label('enBill','Bill / challan no.',`<input type="text" id="enBill" value="${esc(D.bill)}" autocomplete="off" placeholder="Optional">`)}
       ${label('enBy','Entered by',`<input type="text" id="enBy" value="${esc(S.user?S.user.name||S.user.username:'')}" readonly tabindex="-1" class="ro">`)}
     </div>`}
     ${warnTally?`<p class="enote">This date is inside the Tally data (up to ${dstr(S.base.tallyEnd)}). Save it only if this entry is not already in Tally, otherwise it will be counted twice.</p>`:''}
     ${D.type==='ADJ'?`<p class="hint">${D.mode==='set'?'Enter the stock you counted. The difference from the stock on that date is saved as the adjustment.':'Enter a positive number to add stock and a negative number (for example −5) to remove it.'}</p>`:''}
     <fieldset class="fs"><legend>Goods</legend>
     <div class="elines${isDC?' dc':''}" id="enLines">${D.lines.map(lineRow).join('')}</div>
-    <div class="lfoot"><button type="button" class="btn sm" data-addline="1">+ Add item</button>${isDC?`<span class="dctot" id="dcTot">${T.qty?`Total qty <b>${esc(T.qty)}</b>`:''}${T.total?` · Total <b>${esc(T.total)}</b>`:''}</span>`:''}</div></fieldset>
+    <div class="lfoot"><span class="racts"><button type="button" class="btn sm" data-addline="1">+ Add line</button><button type="button" class="btn sm" data-quick="mItems" data-qf="item" title="Add a new item to the Item master">+ New item</button></span>${isDC?`<span class="dctot" id="dcTot">${T.qty?`Total qty <b>${esc(T.qty)}</b>`:''}${T.total?` · Total <b>${esc(T.total)}</b>`:''}</span>`:''}</div></fieldset>
     ${isDC?`<fieldset class="fs"><legend>Transport</legend><div class="egrid">
       ${label('dcVehicle','Vehicle no.',`<input type="text" id="dcVehicle" value="${esc(C.vehicle)}" autocomplete="off" placeholder="e.g. MH-12 AB 1234, by driver">`,'span2')}
       ${label('dcTransporter','Transporter',`<input type="text" id="dcTransporter" value="${esc(C.transporter)}" autocomplete="off">`,'span2')}
@@ -1308,7 +1319,7 @@ function ticon(k){const d={IN:'M12 4v12M6 10l6 6 6-6M4 20h16',OUT:'M3 7h11v9H3zM
 function hintFor(l){
   const n=cleanName(l.item);if(!n||!S.base)return '';
   const D=S.draft;const day=fromIso(D.date);if(isNaN(day))return '';
-  const s=stockOn(n,day);if(!s.known)return '<span style="color:var(--warn)">New item: it will be added to the list</span>';
+  const s=stockOn(n,day);if(!s.known)return itemInfo(n)?'No stock recorded yet for this item':'<span style="color:var(--warn)">Not in the Item master: use “+ New item” to add it, or check the spelling</span>';
   let t=`Stock on ${dstr(day)}: <b>${fmt(s.qty)}</b>`;
   const q=parseFloat(l.qty);
   if(D.type==='ADJ'&&isFinite(q))t+=D.mode==='set'?` → change ${q-s.qty>=0?'+':''}${fmt(q-s.qty)}`:` → ${fmt(s.qty+q)}`;
@@ -1340,11 +1351,17 @@ function entryChanged(el){
 document.addEventListener('input',e=>{const el=e.target;if(el.closest&&el.closest('#entryForm')){readForm();refreshHints()}},true);
 function rerenderEntry(){const y=window.scrollY;render();window.scrollTo(0,y)}
 function entryClick(t){
-  if(t.dataset.etype){if(t.dataset.etype==='ADJ'&&!isAdmin())return true;readForm();if(S.draft.type!==t.dataset.etype){S.draft.type=t.dataset.etype;S.draft.party='';S.draft.bill='';S.entryErr=''}rerenderEntry();return true}
+  if(t.dataset.etype){if(t.dataset.etype==='ADJ'&&!isAdmin())return true;readForm();if(S.draft.type!==t.dataset.etype){const C=S.draft.dc;S.draft.type=t.dataset.etype;S.draft.party='';S.draft.bill='';C.address=C.mobile=C.email=C.ref='';S.entryErr=''}rerenderEntry();return true}
   if(t.dataset.addline){readForm();S.draft.lines.push(newLine());rerenderEntry();const ins=document.querySelectorAll('#enLines .enItem');if(ins.length)ins[ins.length-1].focus();return true}
   if(t.dataset.rmline!=null){readForm();S.draft.lines.splice(+t.dataset.rmline,1);if(!S.draft.lines.length)S.draft.lines.push(newLine());rerenderEntry();return true}
   if(t.dataset.clearentry||t.dataset.canceledit){const ty=S.editId?'IN':S.draft.type;S.editId=null;S.draft=newDraft();S.draft.type=ty;S.entryErr='';rerenderEntry();return true}
   if(t.dataset.printdc){printDC(t.dataset.printdc);return true}
+  if(t.dataset.quick){readForm();const tab=t.dataset.quick,f=t.dataset.qf,D=S.draft;
+    if(!S.masters||!S.masters[MKIND[tab].key]){toast('The masters could not be loaded. Refresh and try again.');return true}
+    // prefill the name with what was typed but is not in the master yet
+    let typed='';if(f==='party')typed=cleanName(D.party);if(f==='item'){const l=D.lines.find(l=>cleanName(l.item)&&!itemInfo(l.item));typed=l?cleanName(l.item):''}
+    if(typed&&masterNames(tab).some(n=>n.toUpperCase()===typed.toUpperCase()))typed='';
+    S.quick={tab,field:f};masterForm(tab,null,typed);return true}
   if(t.dataset.del&&!isAdmin())return true;
   if(t.dataset.del){const id=t.dataset.del;if(S.delArm!==id){S.delArm=id;rerenderEntry();return true}deleteEntry(id);return true}
   return false;
@@ -1690,7 +1707,7 @@ $('#scrim').addEventListener('click',()=>setMenu(false));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
 function go(t){S.tab=allowedTab(t)?t:homeTab();render();window.scrollTo({top:0})}
 $('#dlgClose').addEventListener('click',()=>{const d=$('#dlg');try{d.close()}catch(e){d.removeAttribute('open')}});
-$('#dlg').addEventListener('close',()=>{if(S.charts.i){S.charts.i.destroy();delete S.charts.i}if(S.charts.b){S.charts.b.destroy();delete S.charts.b}});
+$('#dlg').addEventListener('close',()=>{S.quick=null;if(S.charts.i){S.charts.i.destroy();delete S.charts.i}if(S.charts.b){S.charts.b.destroy();delete S.charts.b}});
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-item]');if(!t)return;
   if(t.closest('#entryPage')&&entryClick(t))return;
